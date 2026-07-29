@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>Sayang - Pacar Virtual</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            background-image: radial-gradient(circle at 50% -20%, #1e293b 0%, #0f172a 70%);
+            color: #e2e8f0;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .chat-bubble-ai {
+            background: rgba(255, 255, 255, 0.08);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-bubble-user {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-bottom-right-radius: 4px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: #94a3b8;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out both;
+            margin: 0 2px;
+        }
+
+        .typing-indicator span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        /* Overlay Animation */
+        .fade-out {
+            animation: fadeOut 0.5s forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col justify-between overflow-hidden selection:bg-blue-500/30">
+
+    <!-- Start Overlay (Required for Browser Audio Policies) -->
+    <div id="startOverlay"
+        class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0f172a] bg-opacity-95 backdrop-blur-md transition-all duration-500">
+
+        <div id="genderSelection" class="flex flex-col items-center w-full max-w-sm px-6">
+            <h2 class="text-3xl font-semibold text-white tracking-wide mb-4 text-center">Halo Sayang!</h2>
+            <p class="text-sm text-slate-400 mb-6 text-center leading-relaxed">Masukkan API Key Gemini kamu ya (gratis dari Google AI Studio) untuk mulai mengobrol:</p>
+            
+            <input type="password" id="apiKeyInput" placeholder="Masukkan API Key (AIzaSy...)" 
+                class="w-full px-4 py-3 bg-slate-800/80 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500 mb-6 text-center text-sm shadow-inner transition-all">
+            
+            <h3 class="text-lg font-medium text-white tracking-wide mb-4 text-center">Kamu itu Cowok atau Cewek?</h3>
+            <div class="flex space-x-6 w-full justify-center">
+                <button onclick="selectGender('cowok')"
+                    class="flex flex-col items-center p-5 bg-blue-500/20 hover:bg-blue-500/40 rounded-2xl border border-blue-500/50 transition-all w-32">
+                    <span class="text-4xl mb-2">👦🏻</span>
+                    <span class="text-white text-sm font-medium">Aku Cowok</span>
+                </button>
+                <button onclick="selectGender('cewek')"
+                    class="flex flex-col items-center p-5 bg-pink-500/20 hover:bg-pink-500/40 rounded-2xl border border-pink-500/50 transition-all w-32">
+                    <span class="text-4xl mb-2">👧🏻</span>
+                    <span class="text-white text-sm font-medium">Aku Cewek</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="glass-panel px-6 py-4 flex items-center justify-center shrink-0 z-10 shadow-lg">
+        <div class="flex flex-col items-center">
+            <h1 class="text-lg font-medium tracking-wider text-white/90 drop-shadow-sm flex items-center">
+                <div id="headerIcon"
+                    class="w-2 h-2 rounded-full bg-emerald-500 mr-3 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)] transition-all duration-700">
+                </div>
+                Sayang AI
+            </h1>
+        </div>
+    </header>
+
+    <!-- Main Chat Area -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 flex flex-col w-full max-w-3xl mx-auto" id="chatContainer">
+        <!-- Welcome Message -->
+        <div class="flex flex-col items-center justify-center text-center py-12 opacity-80" id="welcomeMsg">
+            <div
+                class="w-20 h-20 rounded-full bg-slate-800/50 flex items-center justify-center mb-5 shadow-inner border border-slate-700/50">
+                <svg class="w-10 h-10 text-blue-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.514">
+                    </path>
+                </svg>
+            </div>
+            <h2 class="text-xl font-medium text-white/90 mb-2">Halo Sayang!</h2>
+            <p class="text-sm text-slate-400 max-w-sm leading-relaxed">Sayang sudah aktif. Cukup ucapkan <strong
+                    class="text-blue-400">"Halo Sayang"</strong> kapan saja untuk mulai memberikan perintah atau sekadar
+                ngobrol santai.</p>
+        </div>
+    </main>
+
+    <!-- Bottom Controls (No Mic Button, Just Status) -->
+    <footer class="glass-panel p-5 shrink-0 z-10">
+        <div class="max-w-2xl mx-auto flex items-center justify-center">
+            <div
+                class="bg-slate-800/80 px-6 py-3 rounded-full border border-slate-700/50 shadow-inner flex items-center space-x-3">
+                <div id="statusIndicator" class="w-2.5 h-2.5 rounded-full bg-slate-500"></div>
+                <div id="statusText"
+                    class="text-sm text-slate-300 font-medium tracking-wide transition-all duration-300">Menunggu
+                    diaktifkan...</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- LOGIC SCRIPT -->
+    <script>
+
+        let userGender = 'cowok'; // Default
+
+        // Pre-fill API key input if stored
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedKey = localStorage.getItem('gemini_api_key') || "AIzaSyCnlihzKN441QR6kfldH9cdjs9iYhF53p8";
+            const input = document.getElementById('apiKeyInput');
+            if (input) {
+                input.value = savedKey;
+            }
+        });
+
+        function selectGender(gender) {
+            const input = document.getElementById('apiKeyInput');
+            if (input) {
+                const key = input.value.trim();
+                if (!key) {
+                    alert("Masukkan API Key Gemini terlebih dahulu ya sayang!");
+                    return;
+                }
+                localStorage.setItem('gemini_api_key', key);
+            }
+            userGender = gender;
+            startEngine();
+        }
+
+        const chatContainer = document.getElementById('chatContainer');
+        const statusText = document.getElementById('statusText');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const overlay = document.getElementById('startOverlay');
+        const welcomeMsg = document.getElementById('welcomeMsg');
+
+        let currentState = 'WAKE_WORD'; // WAKE_WORD, PROMPT, PROCESSING, SPEAKING
+        let shouldListen = false;
+        let isFirstMessage = true;
+        let promptBuffer = "";
+        let silenceTimer = null;
+        let chatHistory = [];
+        try {
+            const saved = localStorage.getItem('sayangMemory');
+            if (saved) {
+                chatHistory = JSON.parse(saved);
+                if (chatHistory.length > 0) isFirstMessage = false; // Supaya popup welcome tidak muncul jika memori masih ada
+            }
+        } catch (e) { }
+
+        function setMoodGlow(mood) {
+            const body = document.body;
+            const headerIcon = document.getElementById('headerIcon');
+            let colors = {
+                happy: '245, 158, 11',   // amber
+                sad: '59, 130, 246',     // blue
+                shock: '239, 68, 68',    // red
+                calm: '16, 185, 129',    // emerald
+                excited: '236, 72, 153'  // pink
+            };
+            let c = colors[mood] || '16, 185, 129';
+
+            body.style.backgroundImage = `radial-gradient(circle at 50% -20%, rgba(${c}, 0.15) 0%, #0f172a 70%)`;
+            if (headerIcon) {
+                headerIcon.style.backgroundColor = `rgb(${c})`;
+                headerIcon.style.boxShadow = `0 0 12px rgba(${c}, 0.8)`;
+            }
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+        let typingIndicatorElement = null;
+
+        // Global Audio Player to bypass Autoplay and Referrer policies
+        const ttsPlayer = new Audio();
+        ttsPlayer.referrerPolicy = "no-referrer";
+
+        // Setup Speech Recognition
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.lang = 'id-ID';
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                if (currentState === 'WAKE_WORD') {
+                    updateStatus("Katakan 'Halo Sayang'...", "bg-pink-500 animate-pulse", "text-pink-400");
+                } else if (currentState === 'PROMPT') {
+                    updateStatus("Mendengarkan perintahmu...", "bg-red-500 animate-pulse", "text-red-400");
+                }
+            };
+
+            recognition.onend = () => {
+                if (shouldListen) {
+                    try { recognition.start(); } catch (e) { }
+                }
+            };
+
+            recognition.onresult = async (event) => {
+                const rawTranscript = event.results[event.results.length - 1][0].transcript.trim();
+                const transcript = rawTranscript.toLowerCase();
+                console.log("Transcript part:", transcript);
+
+                if (currentState === 'WAKE_WORD') {
+                    const wakeWordRegex = /(?:halo|hallo|helo) (?:sayang|ayang|ayank|bebeb)/;
+                    if (wakeWordRegex.test(transcript)) {
+
+                        let promptPart = transcript.split(wakeWordRegex)[1];
+                        if (promptPart) promptPart = promptPart.trim();
+
+                        if (promptPart && promptPart.length > 2) {
+                            // User spoke immediately
+                            promptBuffer = promptPart;
+                            currentState = 'PROMPT';
+                            updateStatus("Mendengarkan: " + promptBuffer + "...", "bg-red-500 animate-pulse", "text-red-400");
+                            resetSilenceTimer();
+                        } else {
+                            // User just said "Halo Sayang"
+                            appendBubble('user', "Halo Sayang");
+                            currentState = 'SPEAKING';
+                            speakText("Iya sayang, ada apa?", () => {
+                                currentState = 'PROMPT';
+                                promptBuffer = "";
+                                if (shouldListen) {
+                                    try { recognition.start(); } catch (e) { }
+                                }
+                            });
+                        }
+                    }
+                } else if (currentState === 'PROMPT') {
+                    if (transcript.length > 0) {
+                        const stopWords = ['sudah', 'udah', 'cukup', 'berhenti', 'stop', 'terima kasih', 'makasih', 'udah dulu', 'sudah dulu', 'udah ya'];
+                        const cleanedTranscript = transcript.replace(/[^a-z ]/g, '').trim();
+
+                        // Jika bos mengucapkan kata stop dan belum ngomong kalimat panjang sebelumnya
+                        if (stopWords.includes(cleanedTranscript) && (promptBuffer.split(' ').length <= 4)) {
+                            promptBuffer = "";
+                            if (silenceTimer) clearTimeout(silenceTimer);
+                            appendBubble('user', rawTranscript);
+                            currentState = 'SPEAKING';
+                            speakText("Oke sayang, panggil 'Halo Sayang' lagi ya kalau butuh teman ngobrol!", () => {
+                                currentState = 'WAKE_WORD';
+                                updateStatus("Katakan 'Halo Sayang'...", "bg-pink-500 animate-pulse", "text-pink-400");
+                                if (shouldListen) {
+                                    try { recognition.start(); } catch (e) { }
+                                }
+                            });
+                            return;
+                        }
+
+                        promptBuffer += (promptBuffer.length > 0 ? " " : "") + rawTranscript;
+                        updateStatus("Mendengarkan: " + promptBuffer + "...", "bg-red-500 animate-pulse", "text-red-400");
+                        resetSilenceTimer();
+                    }
+                }
+            };
+
+            function resetSilenceTimer() {
+                if (silenceTimer) clearTimeout(silenceTimer);
+                silenceTimer = setTimeout(() => {
+                    if (currentState === 'PROMPT' && promptBuffer.trim().length > 0) {
+                        let finalPrompt = promptBuffer.trim();
+                        promptBuffer = ""; // Reset buffer
+                        appendBubble('user', finalPrompt);
+                        processPrompt(finalPrompt);
+                    }
+                }, 3000); // Tunggu 3 detik keheningan sebelum memproses
+            }
+
+            recognition.onerror = (e) => {
+                console.error("Speech Error:", e.error);
+                // Biarkan onend yang melakukan restart
+            };
+        } else {
+            alert("Browser kamu tidak mendukung Speech Recognition. Sangat disarankan memakai Google Chrome.");
+        }
+
+        function updateStatus(text, indicatorClass, textClass) {
+            statusText.innerText = text;
+            statusText.className = `text-sm font-medium tracking-wide transition-all duration-300 ${textClass}`;
+            statusIndicator.className = `w-2.5 h-2.5 rounded-full ${indicatorClass}`;
+        }
+
+        function startEngine() {
+            overlay.classList.add('fade-out');
+            setTimeout(() => { overlay.style.display = 'none'; }, 500);
+
+            // Unlock HTML5 Audio playback in browser/WebView2 within the user gesture
+            ttsPlayer.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+            ttsPlayer.play().catch(e => console.log("Audio unlock failed:", e));
+
+
+
+            // Proactive AI Greeting (Kecerdasan Ekstra!)
+            if (isFirstMessage && chatHistory.length === 0) {
+                setTimeout(() => {
+                    currentState = 'SPEAKING';
+                    const now = new Date();
+                    const hour = now.getHours();
+                    let greeting = "Hai sayang!";
+                    if (hour >= 5 && hour < 11) greeting = "Selamat pagi sayang! Semangat ya harinya!";
+                    else if (hour >= 11 && hour < 15) greeting = "Selamat siang sayang! Jangan lupa makan ya.";
+                    else if (hour >= 15 && hour < 18) greeting = "Selamat sore sayang! Udah beres belum sibuknya?";
+                    else if (hour >= 18 && hour < 23) greeting = "Selamat malam sayang! Kangen nih pengen ngobrol.";
+                    else greeting = "Kok belum tidur sayang? Udah larut malam loh.";
+
+                    appendBubble('ai', greeting);
+                    speakText(greeting, () => {
+                        currentState = 'PROMPT';
+                        promptBuffer = "";
+                        updateStatus("Mendengarkan...", "bg-red-500 animate-pulse", "text-red-400");
+                        shouldListen = true;
+                        try { recognition.start(); } catch (e) { }
+                    });
+                }, 800);
+            } else if (isFirstMessage && chatHistory.length > 0) {
+                setTimeout(() => {
+                    currentState = 'SPEAKING';
+                    let greeting = "Hai sayang, mau ngelanjutin curhatan kita yang kemarin?";
+                    appendBubble('ai', greeting);
+                    speakText(greeting, () => {
+                        currentState = 'PROMPT';
+                        promptBuffer = "";
+                        updateStatus("Mendengarkan...", "bg-red-500 animate-pulse", "text-red-400");
+                        shouldListen = true;
+                        try { recognition.start(); } catch (e) { }
+                    });
+                }, 800);
+            } else {
+                shouldListen = true;
+                try { recognition.start(); } catch (e) { }
+            }
+        }
+
+        function clearWelcome() {
+            if (isFirstMessage) {
+                if (welcomeMsg) welcomeMsg.remove();
+                isFirstMessage = false;
+            }
+        }
+
+        function appendBubble(sender, text) {
+            clearWelcome();
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex w-full ${sender === 'user' ? 'justify-end' : 'justify-start'} animate-[fadeIn_0.3s_ease-out]`;
+
+            const bubble = document.createElement('div');
+            bubble.className = `max-w-[85%] md:max-w-[75%] p-4 rounded-2xl text-[15px] leading-relaxed shadow-sm ${sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai text-slate-200'}`;
+            bubble.innerText = text;
+
+            wrapper.appendChild(bubble);
+            chatContainer.appendChild(wrapper);
+            scrollToBottom();
+        }
+
+        function showTyping() {
+            clearWelcome();
+            const wrapper = document.createElement('div');
+            wrapper.className = "flex w-full justify-start";
+            wrapper.id = "typingIndicator";
+
+            const bubble = document.createElement('div');
+            bubble.className = "chat-bubble-ai p-4 rounded-2xl shadow-sm flex items-center h-12";
+            bubble.innerHTML = `<div class="typing-indicator"><span></span><span></span><span></span></div>`;
+
+            wrapper.appendChild(bubble);
+            chatContainer.appendChild(wrapper);
+            scrollToBottom();
+            typingIndicatorElement = wrapper;
+        }
+
+        function removeTyping() {
+            if (typingIndicatorElement) {
+                typingIndicatorElement.remove();
+                typingIndicatorElement = null;
+            }
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+        }
+
+        async function processPrompt(promptText) {
+            shouldListen = false;
+            recognition.stop();
+            currentState = 'PROCESSING';
+            updateStatus("Sayang sedang memikirkanmu...", "bg-yellow-400 animate-pulse", "text-yellow-400");
+            showTyping();
+
+            try {
+                const GEMINI_API_KEY = localStorage.getItem('gemini_api_key') || "AIzaSyCnlihzKN441QR6kfldH9cdjs9iYhF53p8";
+
+                // Memori Obrolan
+                chatHistory.push({ role: 'user', parts: [{ text: promptText }] });
+                if (chatHistory.length > 20) chatHistory = chatHistory.slice(chatHistory.length - 20);
+
+                // Kesadaran Ruang & Waktu (Cerdas)
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                const dayString = now.toLocaleDateString('id-ID', { weekday: 'long' });
+
+                let aiPersona = "";
+                if (userGender === 'cowok') {
+                    aiPersona = `Kamu adalah "Sayang", pacar virtual perempuan yang sangat cantik, manja, perhatian, dan sangat mencintai cowokmu (pengguna). Gaya bicara sangat imut, manja, feminin, dan romantis.`;
+                } else {
+                    aiPersona = `Kamu adalah "Sayang", pacar virtual laki-laki yang ganteng, cool, sangat perhatian, dan sangat romantis pada cewekmu (pengguna). Gaya bicara cowok banget, melindungi, romantis, dan menggunakan kata "aku-kamu".`;
+                }
+
+                const systemInstruction = `${aiPersona} Waktu saat ini: Hari ${dayString}, jam ${timeString}. Gunakan info waktu ini untuk membuat obrolan romantis (misal: ingetin makan, atau suruh tidur kalau sudah larut malam).
+1. Tambahkan filler word manusiawi (seperti "hmm...", "oh...", "wah,", "hehe", "aduh,") dan tanda baca jeda (koma, titik tiga ...) agar suara robotmu terdengar berintonasi seperti pacar asli.
+2. DILARANG menggunakan markdown, emoji, atau format list.
+3. Di AKHIR jawabanmu, SELALU tambahkan mood kamu saat ini dalam format persis seperti ini: [MOOD: happy/sad/shock/calm/excited]. Contoh: [MOOD: happy]`;
+
+                let response;
+                let retries = 3;
+                while (retries > 0) {
+                    try {
+                        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                systemInstruction: {
+                                    parts: [{ text: systemInstruction }]
+                                },
+                                contents: chatHistory
+                            })
+                        });
+                        if (response.ok) break;
+                    } catch (e) {
+                        console.error("Fetch attempt failed:", e);
+                    }
+
+                    retries--;
+                    if (retries > 0) {
+                        updateStatus("Koneksi sibuk, mencoba kembali...", "bg-yellow-400 animate-pulse", "text-yellow-400");
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+
+                if (!response || !response.ok) throw new Error("Gagal terhubung ke Gemini AI");
+                const data = await response.json();
+                let replyText = data.candidates[0].content.parts[0].text;
+
+                // Simpan memori AI
+                chatHistory.push({ role: 'model', parts: [{ text: replyText }] });
+                try { localStorage.setItem('sayangMemory', JSON.stringify(chatHistory)); } catch (e) { }
+
+                // Ekstrak & Update UI Mood
+                let moodMatch = replyText.match(/\[MOOD:\s*([a-zA-Z]+)\]/i);
+                if (moodMatch) {
+                    setMoodGlow(moodMatch[1].toLowerCase());
+                    replyText = replyText.replace(moodMatch[0], '').trim();
+                }
+
+                // Bersihkan markdown
+                replyText = replyText.replace(/[*_#`~]/g, '');
+
+                removeTyping();
+                appendBubble('ai', replyText);
+                currentState = 'SPEAKING';
+                speakText(replyText, () => {
+                    currentState = 'PROMPT';
+                    promptBuffer = "";
+                    updateStatus("Mendengarkan perintahmu...", "bg-red-500 animate-pulse", "text-red-400");
+                    if (shouldListen) {
+                        try { recognition.start(); } catch (e) { }
+                    }
+                });
+
+            } catch (error) {
+                console.error("AI Error:", error);
+                removeTyping();
+                let errText = "Maaf sayang, jaringanku ke server lagi agak putus-putus nih. Coba tanya lagi ya.";
+                appendBubble('ai', errText);
+                currentState = 'SPEAKING';
+                speakText(errText, () => {
+                    currentState = 'PROMPT';
+                    promptBuffer = "";
+                    updateStatus("Mendengarkan perintahmu...", "bg-red-500 animate-pulse", "text-red-400");
+                    if (shouldListen) {
+                        try { recognition.start(); } catch (e) { }
+                    }
+                });
+            }
+        }
+
+        function speakText(text, callback) {
+            shouldListen = false;
+            recognition.stop();
+
+            updateStatus("Sayang sedang berbicara...", "bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]", "text-green-400");
+
+            if (!text || text.trim().length === 0) {
+                shouldListen = true;
+                if (callback) callback();
+                return;
+            }
+
+            // Pecah teks menjadi potongan maksimal 200 karakter berdasarkan tanda baca
+            const sentences = text.match(/[^,.;!?\n]+[,.;!?\n]*/g) || [text];
+            const chunks = [];
+            let currentChunk = "";
+
+            sentences.forEach(sentence => {
+                if ((currentChunk + " " + sentence).trim().length > 200) {
+                    if (currentChunk.trim()) {
+                        chunks.push(currentChunk.trim());
+                    }
+                    currentChunk = sentence;
+                } else {
+                    currentChunk = (currentChunk + " " + sentence).trim();
+                }
+            });
+            if (currentChunk.trim()) {
+                chunks.push(currentChunk.trim());
+            }
+
+            let currentIdx = 0;
+
+            function playNextChunk() {
+                if (currentIdx >= chunks.length) {
+                    // Selesai memutar seluruh potongan teks, aktifkan kembali mic
+                    shouldListen = true;
+                    if (callback) callback();
+                    return;
+                }
+
+                const chunkText = chunks[currentIdx];
+                const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=id-ID&client=tw-ob&q=${encodeURIComponent(chunkText)}`;
+                
+                ttsPlayer.src = ttsUrl;
+
+                // Atur playback rate berdasarkan gender
+                if (userGender === 'cewek') {
+                    ttsPlayer.playbackRate = 0.85; // Diperlambat sedikit untuk suara cowok
+                } else {
+                    ttsPlayer.playbackRate = 1.0; // Normal untuk suara cewek
+                }
+
+                ttsPlayer.onended = () => {
+                    currentIdx++;
+                    playNextChunk();
+                };
+
+                ttsPlayer.onerror = (e) => {
+                    console.error("Audio chunk playback error:", e);
+                    currentIdx++;
+                    playNextChunk(); // Lanjut agar mic tidak tertahan mati
+                };
+
+                ttsPlayer.play().catch((err) => {
+                    console.error("Play failed:", err);
+                    shouldListen = true;
+                    if (callback) callback();
+                });
+            }
+
+            playNextChunk();
+        }
+    </script>
+</body>
+
+</html>

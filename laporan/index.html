@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bendahara Agus Sudanra - Dashboard</title>
+    <!-- Favicon -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0b0f19;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+
+        /* Mobile Responsive Table (Card View) */
+        @media (max-width: 767px) {
+
+            .mobile-table,
+            .mobile-table tbody,
+            .mobile-table tr,
+            .mobile-table td {
+                display: block;
+                width: 100%;
+            }
+
+            .mobile-table thead {
+                display: none;
+            }
+
+            .mobile-table tr {
+                margin-bottom: 1rem;
+                border: 1px solid #1f2937;
+                border-radius: 1rem;
+                background-color: rgba(17, 24, 39, 0.4);
+                padding: 0.5rem 0;
+            }
+
+            .mobile-table td {
+                text-align: right !important;
+                padding-left: 50% !important;
+                position: relative;
+                border-bottom: 1px solid rgba(31, 41, 55, 0.5);
+                display: flex !important;
+                justify-content: flex-end;
+                align-items: center;
+                min-height: 3.5rem;
+                white-space: normal !important;
+            }
+
+            .mobile-table td:last-child {
+                border-bottom: none;
+            }
+
+            .mobile-table td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 1rem;
+                width: 45%;
+                text-align: left;
+                font-weight: 600;
+                color: #9ca3af;
+                text-transform: uppercase;
+                font-size: 0.7rem;
+                letter-spacing: 0.05em;
+            }
+
+            /* Khusus Keterangan agar presisi dan rapi saat teks panjang di HP */
+            .mobile-table td[data-label="Keterangan"] {
+                justify-content: flex-start !important;
+                text-align: left !important;
+                padding-left: 1rem !important;
+                padding-top: 2rem !important;
+                padding-bottom: 1rem !important;
+                align-items: flex-start;
+                word-break: break-word;
+            }
+
+            .mobile-table td[data-label="Keterangan"]::before {
+                top: 0.5rem;
+                left: 1rem;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body class="text-gray-100 min-h-full flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- ================= LOGIN SCREEN ================= -->
+    <div id="login-screen" class="flex-1 flex items-center justify-center p-4">
+        <div
+            class="w-full max-w-md bg-gray-900/50 backdrop-blur-xl border border-gray-800 p-8 rounded-2xl shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <div class="inline-flex p-3 bg-indigo-500/10 rounded-xl text-indigo-400 mb-2">
+                    <i class="fa-solid fa-vault text-3xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight text-white">Pembukuan Bendahara</h1>
+                <p class="text-sm text-gray-400">Silakan masukkan password untuk mengakses sistem</p>
+            </div>
+
+            <form id="login-form" class="space-y-4" onsubmit="handleLogin(event)">
+                <div class="space-y-1.5">
+                    <label for="password"
+                        class="text-xs font-semibold uppercase tracking-wider text-gray-400">Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="password" required
+                            class="w-full pl-10 pr-4 py-3 bg-gray-950 border border-gray-800 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-sm"
+                            placeholder="••••••••">
+                    </div>
+                    <p id="login-error" class="text-xs text-red-400 hidden mt-1"><i
+                            class="fa-solid fa-circle-exclamation mr-1"></i> Password salah!</p>
+                </div>
+                <button type="submit"
+                    class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98]">
+                    Masuk Ke Sistem
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MAIN DASHBOARD ================= -->
+    <div id="main-dashboard" class="hidden flex-1 flex flex-col relative">
+
+        <!-- TOAST NOTIFICATION -->
+        <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col space-y-2"></div>
+
+        <!-- ================= WELCOME MODAL FOR ADMIN ================= -->
+        <div id="welcome-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+            <!-- Backdrop -->
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeWelcomeModal()">
+            </div>
+            <!-- Modal Content -->
+            <div class="relative bg-gray-900 border border-gray-800 p-6 sm:p-8 rounded-3xl shadow-2xl w-full max-w-md transform scale-95 opacity-0 transition-all duration-300"
+                id="welcome-modal-content">
+                <div class="text-center space-y-3 mb-6">
+                    <div
+                        class="inline-flex p-4 bg-indigo-500/10 rounded-full text-indigo-400 mb-2 ring-4 ring-indigo-500/20 shadow-lg shadow-indigo-500/20">
+                        <i class="fa-solid fa-hand-holding-dollar text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Selamat Datang, Pak!</h2>
+                    <p class="text-gray-400 text-sm">Apa yang ingin Bapak lakukan hari ini?</p>
+                </div>
+
+                <div class="space-y-3">
+                    <button onclick="selectWelcomeAction('laporan')"
+                        class="w-full p-4 rounded-2xl flex items-center space-x-4 bg-gray-800/80 hover:bg-indigo-600 transition-all border border-gray-700 hover:border-indigo-500 group shadow-lg">
+                        <div
+                            class="p-3 bg-gray-900 group-hover:bg-indigo-700 rounded-xl text-indigo-400 group-hover:text-white transition-colors">
+                            <i
+                                class="fa-solid fa-file-invoice-dollar text-xl w-6 h-6 flex items-center justify-center"></i>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-bold text-gray-200 group-hover:text-white text-base">Lihat Laporan</h3>
+                            <p class="text-xs text-gray-500 group-hover:text-indigo-200">Cek rekap keuangan saat ini</p>
+                        </div>
+                    </button>
+
+                    <button onclick="selectWelcomeAction('pemasukan')"
+                        class="w-full p-4 rounded-2xl flex items-center space-x-4 bg-gray-800/80 hover:bg-emerald-600 transition-all border border-gray-700 hover:border-emerald-500 group shadow-lg">
+                        <div
+                            class="p-3 bg-gray-900 group-hover:bg-emerald-700 rounded-xl text-emerald-400 group-hover:text-white transition-colors">
+                            <i class="fa-solid fa-circle-plus text-xl w-6 h-6 flex items-center justify-center"></i>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-bold text-gray-200 group-hover:text-white text-base">Catat Pemasukan</h3>
+                            <p class="text-xs text-gray-500 group-hover:text-emerald-200">Tambahkan data uang masuk</p>
+                        </div>
+                    </button>
+
+                    <button onclick="selectWelcomeAction('pengeluaran')"
+                        class="w-full p-4 rounded-2xl flex items-center space-x-4 bg-gray-800/80 hover:bg-rose-600 transition-all border border-gray-700 hover:border-rose-500 group shadow-lg">
+                        <div
+                            class="p-3 bg-gray-900 group-hover:bg-rose-700 rounded-xl text-rose-400 group-hover:text-white transition-colors">
+                            <i class="fa-solid fa-circle-minus text-xl w-6 h-6 flex items-center justify-center"></i>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-bold text-gray-200 group-hover:text-white text-base">Catat Pengeluaran</h3>
+                            <p class="text-xs text-gray-500 group-hover:text-rose-200">Tambahkan data uang keluar</p>
+                        </div>
+                    </button>
+                </div>
+
+                <button onclick="closeWelcomeModal()"
+                    class="mt-6 w-full py-3 text-sm font-semibold text-gray-500 hover:text-gray-300 transition-colors">
+                    Tutup & Lanjutkan ke Dashboard
+                </button>
+            </div>
+        </div>
+
+        <!-- Top Navbar -->
+        <header class="bg-gray-900/40 backdrop-blur-md border-b border-gray-800 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span
+                        class="p-2 bg-gradient-to-tr from-indigo-600 to-violet-500 rounded-lg text-white shadow-md shadow-indigo-600/10">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </span>
+                    <span
+                        class="font-bold text-lg tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Bendahara
+                        Agus Sudanra</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div
+                        class="flex items-center space-x-2 bg-gray-800/60 px-3 py-1.5 rounded-full border border-gray-700/50">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="role-badge"
+                            class="text-xs font-semibold uppercase tracking-wider text-gray-300">Role</span>
+                    </div>
+                    <button onclick="handleLogout()"
+                        class="text-sm bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1.5">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                        <span class="hidden sm:inline">Keluar</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Wrapper -->
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+            <!-- ADMIN CONTROLS (NAVIGATION BUTTONS) -->
+            <div id="admin-controls"
+                class="bg-gray-900/30 border border-gray-800/80 p-4 rounded-2xl flex flex-col sm:flex-row gap-4 justify-between items-center">
+                <div class="flex flex-wrap gap-3 justify-center sm:justify-start">
+                    <button onclick="switchTab('laporan')" id="btn-tab-laporan"
+                        class="px-5 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center space-x-2 bg-indigo-600 text-white shadow-lg shadow-indigo-600/10">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <span>Lihat Laporan</span>
+                    </button>
+                    <button onclick="switchTab('pemasukan')" id="btn-tab-pemasukan"
+                        class="px-5 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300">
+                        <i class="fa-solid fa-circle-plus text-emerald-400"></i>
+                        <span>Create Pemasukan</span>
+                    </button>
+                    <button onclick="switchTab('pengeluaran')" id="btn-tab-pengeluaran"
+                        class="px-5 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300">
+                        <i class="fa-solid fa-circle-minus text-rose-400"></i>
+                        <span>Create Pengeluaran</span>
+                    </button>
+                    <button onclick="switchTab('multiple')" id="btn-tab-multiple"
+                        class="px-5 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300">
+                        <i class="fa-solid fa-list-ol text-blue-400"></i>
+                        <span>Create Multiple Data</span>
+                    </button>
+                </div>
+                <div
+                    class="flex flex-wrap gap-3 w-full sm:w-auto border-t sm:border-t-0 sm:border-l border-gray-800 pt-4 sm:pt-0 sm:pl-4 justify-center sm:justify-end">
+                    <button onclick="fetchFromCloud()"
+                        class="px-4 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-teal-400">
+                        <i class="fa-solid fa-cloud-arrow-down"></i>
+                        <span>Sync Cloud</span>
+                    </button>
+                    <button onclick="openExcelView()"
+                        class="px-4 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-green-400">
+                        <i class="fa-solid fa-table"></i>
+                        <span>View Excel Format</span>
+                    </button>
+                    <button onclick="exportData()"
+                        class="px-4 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-blue-400">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Backup Data</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ================= VIEW LAPORAN TAB ================= -->
+            <div id="tab-laporan" class="space-y-6">
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Total Pemasukan -->
+                    <div
+                        class="bg-gray-900/40 border border-gray-800/80 p-5 rounded-2xl flex items-center justify-between shadow-xl">
+                        <div class="space-y-1">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Pemasukan</p>
+                            <h3 id="summary-pemasukan" class="text-2xl font-bold text-emerald-400">Rp 0</h3>
+                        </div>
+                        <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400"><i
+                                class="fa-solid fa-arrow-down-long text-xl"></i></div>
+                    </div>
+                    <!-- Total Pengeluaran -->
+                    <div
+                        class="bg-gray-900/40 border border-gray-800/80 p-5 rounded-2xl flex items-center justify-between shadow-xl">
+                        <div class="space-y-1">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Pengeluaran
+                            </p>
+                            <h3 id="summary-pengeluaran" class="text-2xl font-bold text-rose-400">Rp 0</h3>
+                        </div>
+                        <div class="p-3 bg-rose-500/10 rounded-xl text-rose-400"><i
+                                class="fa-solid fa-arrow-up-long text-xl"></i></div>
+                    </div>
+                    <!-- Sisa Saldo / Hasil -->
+                    <div
+                        class="bg-gray-900/40 border border-gray-800/80 p-5 rounded-2xl flex items-center justify-between shadow-xl">
+                        <div class="space-y-1">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Sisa Saldo (Hasil)
+                            </p>
+                            <h3 id="summary-hasil" class="text-2xl font-bold text-white">Rp 0</h3>
+                        </div>
+                        <div id="summary-hasil-icon" class="p-3 bg-gray-800 rounded-xl text-gray-400"><i
+                                class="fa-solid fa-scale-balanced text-xl"></i></div>
+                    </div>
+                </div>
+
+                <!-- Table View Area -->
+                <div
+                    class="bg-gray-900/40 border border-gray-800/80 rounded-2xl overflow-hidden shadow-xl flex flex-col">
+                    <!-- Table Filter Header -->
+                    <div class="p-4 bg-gray-900/60 border-b border-gray-800 flex flex-col gap-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <h2 class="font-bold text-base text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-list text-indigo-400 text-sm"></i>
+                                <span>Rincian Transaksi</span>
+                            </h2>
+                            <!-- Filter Buttons -->
+                            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                                <select id="time-filter" onchange="setTimeFilter(this.value)"
+                                    class="bg-gray-950 border border-gray-800 text-gray-300 text-xs font-medium rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-sm">
+                                    <option value="semua">Semua Waktu</option>
+                                    <option value="bulan_ini">Bulan Ini</option>
+                                </select>
+                                <div
+                                    class="inline-flex bg-gray-950 p-1 rounded-xl border border-gray-800 self-start sm:self-auto">
+                                    <button onclick="setFilter('semua')" id="filter-semua"
+                                        class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-indigo-600 text-white">Semua</button>
+                                    <button onclick="setFilter('pemasukan')" id="filter-pemasukan"
+                                        class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all text-gray-400 hover:text-white">Masuk</button>
+                                    <button onclick="setFilter('pengeluaran')" id="filter-pengeluaran"
+                                        class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all text-gray-400 hover:text-white">Keluar</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Search Bar -->
+                        <div class="relative w-full">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-magnifying-glass text-gray-500 text-sm"></i>
+                            </div>
+                            <input type="text" id="search-input" oninput="handleSearch()"
+                                placeholder="Cari keterangan transaksi..."
+                                class="w-full pl-10 pr-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600 shadow-sm">
+                        </div>
+                    </div>
+
+                    <!-- Responsive Table Wrapper -->
+                    <div class="w-full min-h-[250px]">
+                        <table class="w-full text-left border-collapse text-sm text-gray-300 mobile-table">
+                            <thead id="table-head"
+                                class="bg-gray-950/40 text-gray-400 text-xs font-semibold uppercase tracking-wider border-b border-gray-800">
+                                <!-- Generated Dynamically -->
+                            </thead>
+                            <tbody id="table-body" class="divide-y divide-gray-800/60">
+                                <!-- Generated Dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= CREATE PEMASUKAN TAB ================= -->
+            <div id="tab-pemasukan"
+                class="hidden max-w-xl mx-auto bg-gray-900/40 border border-gray-800/80 p-6 rounded-2xl shadow-xl space-y-4">
+                <div class="flex items-center space-x-3 pb-3 border-b border-gray-800">
+                    <span class="p-2 bg-emerald-500/10 rounded-lg text-emerald-400"><i
+                            class="fa-solid fa-circle-plus"></i></span>
+                    <h2 class="text-lg font-bold text-white">Input Pemasukan Baru</h2>
+                </div>
+                <form onsubmit="handleInsert(event, 'pemasukan')" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-gray-400">Tanggal & Jam</label>
+                            <input type="datetime-local" id="in-pem-tanggal" required
+                                class="w-full px-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm"
+                                style="color-scheme: dark;">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-gray-400">Jumlah (Rp)</label>
+                            <input type="text" id="in-pem-jumlah" required oninput="formatInputRupiah(this)"
+                                placeholder="Contoh: 50.000"
+                                class="w-full px-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-emerald-400 font-semibold focus:outline-none focus:border-indigo-500 text-sm">
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-gray-400">Keterangan Sumber</label>
+                        <textarea id="in-pem-keterangan" required rows="2" placeholder="Contoh: Penjualan, Donasi, dll"
+                            class="w-full px-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm resize-y"></textarea>
+                    </div>
+                    <button type="submit"
+                        class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl transition-all shadow-lg shadow-emerald-600/10">Simpan
+                        Pemasukan</button>
+                </form>
+            </div>
+
+            <!-- ================= CREATE PENGELUARAN TAB ================= -->
+            <div id="tab-pengeluaran"
+                class="hidden max-w-xl mx-auto bg-gray-900/40 border border-gray-800/80 p-6 rounded-2xl shadow-xl space-y-4">
+                <div class="flex items-center space-x-3 pb-3 border-b border-gray-800">
+                    <span class="p-2 bg-rose-500/10 rounded-lg text-rose-400"><i
+                            class="fa-solid fa-circle-minus"></i></span>
+                    <h2 class="text-lg font-bold text-white">Input Pengeluaran Baru</h2>
+                </div>
+                <form onsubmit="handleInsert(event, 'pengeluaran')" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-gray-400">Tanggal & Jam</label>
+                            <input type="datetime-local" id="in-peng-tanggal" required
+                                class="w-full px-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm"
+                                style="color-scheme: dark;">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-gray-400">Jumlah (Rp)</label>
+                            <input type="text" id="in-peng-jumlah" required oninput="formatInputRupiah(this)"
+                                placeholder="Contoh: 15.000"
+                                class="w-full px-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-rose-400 font-semibold focus:outline-none focus:border-indigo-500 text-sm">
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-gray-400">Keterangan Keperluan</label>
+                        <textarea id="in-peng-keterangan" required rows="2"
+                            placeholder="Contoh: Beli Besi, Bayar Listrik, dll"
+                            class="w-full px-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm resize-y"></textarea>
+                    </div>
+                    <button type="submit"
+                        class="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-medium rounded-xl transition-all shadow-lg shadow-rose-600/10">Simpan
+                        Pengeluaran</button>
+                </form>
+            </div>
+
+            <!-- ================= CREATE MULTIPLE DATA TAB ================= -->
+            <div id="tab-multiple"
+                class="hidden max-w-4xl mx-auto bg-gray-900/40 border border-gray-800/80 p-6 rounded-2xl shadow-xl space-y-4">
+                <div class="flex items-center space-x-3 pb-3 border-b border-gray-800">
+                    <span class="p-2 bg-blue-500/10 rounded-lg text-blue-400"><i class="fa-solid fa-list-ol"></i></span>
+                    <h2 class="text-lg font-bold text-white">Input Banyak Transaksi Sekaligus</h2>
+                </div>
+                <form onsubmit="handleMultipleSubmit(event)" class="space-y-4">
+                    <div id="multiple-rows-container" class="space-y-4 max-h-[60vh] overflow-y-auto p-1 pr-2">
+                        <!-- Baris akan ditambahkan via JS -->
+                    </div>
+
+                    <button type="button" onclick="addMultipleRow()"
+                        class="w-full py-3 border-2 border-dashed border-gray-700 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 hover:bg-blue-500/5 rounded-xl transition-colors font-medium text-sm flex items-center justify-center">
+                        <i class="fa-solid fa-plus mr-2"></i> Tambah Baris Transaksi
+                    </button>
+
+                    <button type="submit"
+                        class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-all shadow-lg shadow-blue-600/10 flex items-center justify-center">
+                        <i class="fa-solid fa-save mr-2"></i>Simpan Semua Transaksi
+                    </button>
+                </form>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ================= EDIT MODAL ================= -->
+    <div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeEditModal()"></div>
+        <div class="relative bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="flex items-center space-x-3 pb-3 border-b border-gray-800 mb-4">
+                <span class="p-2 bg-indigo-500/10 rounded-lg text-indigo-400"><i
+                        class="fa-solid fa-pen-to-square"></i></span>
+                <h2 class="text-lg font-bold text-white">Edit Transaksi</h2>
+            </div>
+            <form id="edit-form" onsubmit="submitEdit(event)" class="space-y-4">
+                <input type="hidden" id="edit-id">
+                <input type="hidden" id="edit-jenis">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-gray-400">Tanggal & Jam</label>
+                    <input type="datetime-local" id="edit-tanggal" required
+                        class="w-full px-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm"
+                        style="color-scheme: dark;">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-gray-400">Jumlah (Rp)</label>
+                    <input type="text" id="edit-jumlah" required oninput="formatInputRupiah(this)"
+                        class="w-full px-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-white font-semibold focus:outline-none focus:border-indigo-500 text-sm">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-gray-400">Keterangan</label>
+                    <textarea id="edit-keterangan" required rows="2"
+                        class="w-full px-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm resize-y"></textarea>
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="closeEditModal()"
+                        class="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-all">Batal</button>
+                    <button type="submit" id="btn-submit-edit"
+                        class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition-all shadow-lg shadow-indigo-600/10">Simpan
+                        Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= EXCEL VIEW MODAL ================= -->
+    <div id="excel-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity" onclick="closeExcelView()"></div>
+        <div
+            class="relative bg-gray-100 border border-gray-300 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between p-4 bg-white border-b border-gray-300 shadow-sm z-10">
+                <div class="flex items-center space-x-3">
+                    <span class="p-2 bg-green-100 rounded-lg text-green-600"><i
+                            class="fa-solid fa-file-excel"></i></span>
+                    <h2 class="text-lg font-bold text-gray-800">Tampilan Laporan Format Excel</h2>
+                </div>
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <button onclick="printLaporan()"
+                        class="flex items-center space-x-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200 text-sm font-medium shadow-sm active:scale-95">
+                        <i class="fa-solid fa-print"></i>
+                        <span class="hidden sm:inline">Print</span>
+                    </button>
+                    <button onclick="downloadExcelFile(event)"
+                        class="flex items-center space-x-1.5 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg transition-colors border border-green-200 text-sm font-medium shadow-sm active:scale-95">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span class="hidden sm:inline">Excel</span>
+                    </button>
+                    <div class="w-px h-6 bg-gray-300 mx-1"></div>
+                    <button onclick="closeExcelView()"
+                        class="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-0 overflow-auto flex-1 bg-white">
+                <table id="excel-table-element"
+                    class="w-full text-left border-collapse border border-gray-300 text-black text-sm whitespace-nowrap bg-white">
+                    <thead class="bg-gray-100 sticky top-0 shadow-sm z-10">
+                        <tr>
+                            <th class="border border-gray-300 px-4 py-3 text-center w-12 font-semibold text-gray-700">No
+                            </th>
+                            <th class="border border-gray-300 px-4 py-3 font-semibold text-gray-700">Tanggal</th>
+                            <th class="border border-gray-300 px-4 py-3 font-semibold text-gray-700">Jam</th>
+                            <th class="border border-gray-300 px-4 py-3 font-semibold text-gray-700 w-full">Keterangan
+                            </th>
+                            <th class="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-700">
+                                Pemasukan</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-700">
+                                Pengeluaran</th>
+                        </tr>
+                    </thead>
+                    <tbody id="excel-table-body" class="divide-y divide-gray-200">
+                        <!-- Data will be rendered here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT SYSTEM logic ================= -->
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGGS4c4zfcnkDnrqzQvtmJQHYM0s2aSuY7OVv7L0-5_rHLje1vF0-W0CcE1D3Yzhhf/exec';
+
+        // State management
+        let currentRole = null; // 'admin' atau 'user'
+        let currentTab = 'laporan'; // 'laporan', 'pemasukan', 'pengeluaran'
+        let activeFilter = 'semua'; // 'semua', 'pemasukan', 'pengeluaran'
+        let timeFilter = 'semua'; // 'semua', 'bulan_ini'
+        let searchQuery = '';
+
+        // Menarik data dari Cloud (Google Sheets)
+        async function fetchFromCloud() {
+            showToast('Menyinkronkan dengan Google Sheets...', 'success');
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                localStorage.setItem('finance_ledger_db', JSON.stringify(data));
+                renderData();
+                showToast('Data berhasil disinkronkan!', 'success');
+            } catch (error) {
+                showToast('Gagal memuat data dari cloud. Menggunakan data lokal.', 'error');
+            }
+        }
+
+        // Fungsi Penanganan Login
+        function handleLogin(event) {
+            event.preventDefault();
+            const passwordInput = document.getElementById('password').value;
+            const errorText = document.getElementById('login-error');
+
+            if (passwordInput === 'sudanra') {
+                currentRole = 'admin';
+                initDashboard();
+                showToast('Login berhasil sebagai Admin!', 'success');
+            } else if (passwordInput === 'user') {
+                currentRole = 'user';
+                initDashboard();
+                showToast('Login berhasil sebagai Viewer!', 'success');
+            } else {
+                errorText.classList.remove('hidden');
+                showToast('Password yang Anda masukkan salah!', 'error');
+            }
+        }
+
+        // Inisialisasi Dashboard setelah sukses login
+        function initDashboard() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-dashboard').classList.remove('hidden');
+
+            const roleBadge = document.getElementById('role-badge');
+            const adminControls = document.getElementById('admin-controls');
+
+            if (currentRole === 'admin') {
+                roleBadge.textContent = 'Admin';
+                roleBadge.className = "text-xs font-semibold uppercase tracking-wider text-amber-400";
+                adminControls.classList.remove('hidden'); // Tampilkan 3 tombol navigasi khusus admin
+                switchTab('laporan');
+                setTimeout(() => showWelcomeModal(), 150);
+            } else {
+                roleBadge.textContent = 'Viewer Only';
+                roleBadge.className = "text-xs font-semibold uppercase tracking-wider text-blue-400";
+                adminControls.classList.add('hidden'); // Sembunyikan navigasi input data untuk user biasa
+                switchTab('laporan');
+            }
+
+            // Tampilkan data lokal yang ada sambil fetch dari cloud
+            renderData();
+            fetchFromCloud();
+        }
+
+        // Menampilkan Modal Selamat Datang untuk Admin
+        function showWelcomeModal() {
+            const modal = document.getElementById('welcome-modal');
+            const content = document.getElementById('welcome-modal-content');
+            if (modal && content) {
+                modal.classList.remove('hidden');
+                // Trigger reflow untuk animasi
+                void modal.offsetWidth;
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }
+        }
+
+        function closeWelcomeModal() {
+            const modal = document.getElementById('welcome-modal');
+            const content = document.getElementById('welcome-modal-content');
+            if (modal && content) {
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        function selectWelcomeAction(action) {
+            closeWelcomeModal();
+            setTimeout(() => switchTab(action), 300);
+        }
+
+        // Keluar dari sistem
+        function handleLogout() {
+            currentRole = null;
+            document.getElementById('password').value = '';
+            document.getElementById('login-error').classList.add('hidden');
+            document.getElementById('main-dashboard').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        // Multiple Input Logic
+        function addMultipleRow() {
+            const container = document.getElementById('multiple-rows-container');
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const dateValue = now.toISOString().slice(0, 16);
+
+            const rowHtml = `
+            <div class="multiple-row bg-gray-950/80 border border-gray-800 p-4 rounded-xl relative group transition-all hover:border-gray-700 shadow-sm">
+                <button type="button" onclick="this.parentElement.remove()" class="absolute -top-3 -right-3 bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500 hover:text-white rounded-full w-8 h-8 flex items-center justify-center transition-all shadow-sm z-10 opacity-0 group-hover:opacity-100"><i class="fa-solid fa-times text-sm"></i></button>
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <div class="md:col-span-3 space-y-1.5">
+                        <label class="text-xs font-medium text-gray-400">Jenis</label>
+                        <select name="multi_jenis" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none font-medium text-gray-300">
+                            <option value="pemasukan" class="text-emerald-400">Pemasukan (+)</option>
+                            <option value="pengeluaran" class="text-rose-400">Pengeluaran (-)</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-3 space-y-1.5">
+                        <label class="text-xs font-medium text-gray-400">Waktu</label>
+                        <input type="datetime-local" name="multi_tanggal" value="\${dateValue}" required style="color-scheme: dark;" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none text-gray-300">
+                    </div>
+                    <div class="md:col-span-4 space-y-1.5">
+                        <label class="text-xs font-medium text-gray-400">Keterangan</label>
+                        <input type="text" name="multi_keterangan" required placeholder="Detail keperluan..." class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none text-white">
+                    </div>
+                    <div class="md:col-span-2 space-y-1.5">
+                        <label class="text-xs font-medium text-gray-400">Jumlah (Rp)</label>
+                        <input type="text" name="multi_jumlah" oninput="formatInputRupiah(this)" required placeholder="0" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm font-semibold text-blue-400 focus:ring-1 focus:ring-blue-500 outline-none text-right">
+                    </div>
+                </div>
+            </div>
+            `;
+            container.insertAdjacentHTML('beforeend', rowHtml);
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function handleMultipleSubmit(e) {
+            e.preventDefault();
+            const rows = document.querySelectorAll('.multiple-row');
+            if (rows.length === 0) {
+                showToast('Tambahkan minimal 1 baris transaksi', 'error');
+                return;
+            }
+
+            let db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
+            let newItems = [];
+
+            const btn = e.target.querySelector('button[type="submit"]');
+            const ogHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Menyimpan...';
+            btn.disabled = true;
+
+            rows.forEach(row => {
+                const jenis = row.querySelector('[name="multi_jenis"]').value;
+                const tanggal = row.querySelector('[name="multi_tanggal"]').value;
+                const keterangan = row.querySelector('[name="multi_keterangan"]').value;
+                const jumlahRaw = row.querySelector('[name="multi_jumlah"]').value;
+                const jumlah = parseInt(jumlahRaw.replace(/[^0-9]/g, '')) || 0;
+
+                const data = {
+                    id: 'TXN-' + Date.now() + Math.floor(Math.random() * 1000),
+                    jenis: jenis,
+                    tanggal: tanggal,
+                    keterangan: keterangan,
+                    jumlah: jumlah
+                };
+                newItems.push(data);
+                db.push(data);
+            });
+
+            localStorage.setItem('finance_ledger_db', JSON.stringify(db));
+
+            showToast(`\${newItems.length} Transaksi Berhasil Disimpan!`);
+
+            // Background sync securely sequenced to avoid Apps Script locking issues
+            newItems.forEach((item, index) => {
+                setTimeout(() => {
+                    saveDataToDrive('insert', item);
+                }, index * 800);
+            });
+
+            // Reset form UI and bounce back to report view
+            setTimeout(() => {
+                btn.innerHTML = ogHtml;
+                btn.disabled = false;
+                document.getElementById('multiple-rows-container').innerHTML = '';
+                switchTab('laporan');
+                renderData();
+                calculateSaldo();
+            }, 500);
+        }
+
+        // Penggantian Tab Menu Kontrol Admin
+        function switchTab(tabName) {
+            currentTab = tabName;
+
+            // Sembunyikan seluruh container tab terlebih dahulu
+            document.getElementById('tab-laporan').classList.add('hidden');
+            document.getElementById('tab-pemasukan').classList.add('hidden');
+            document.getElementById('tab-pengeluaran').classList.add('hidden');
+            const tabMulti = document.getElementById('tab-multiple');
+            if (tabMulti) tabMulti.classList.add('hidden');
+
+            // Reset gaya tombol navigasi admin ke kondisi pasif
+            const tabs = ['laporan', 'pemasukan', 'pengeluaran', 'multiple'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`btn-tab-\${t}`);
+                if (btn) {
+                    btn.className = "px-5 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300";
+                }
+            });
+
+            // Tampilkan tab yang aktif beserta modifikasi warnanya
+            if (tabName === 'laporan') {
+                document.getElementById('tab-laporan').classList.remove('hidden');
+                document.getElementById('btn-tab-laporan').className = "px-5 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center space-x-2 bg-indigo-600 text-white shadow-lg shadow-indigo-600/10";
+                renderData();
+            } else if (tabName === 'pemasukan') {
+                document.getElementById('tab-pemasukan').classList.remove('hidden');
+                document.getElementById('btn-tab-pemasukan').className = "px-5 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center space-x-2 bg-emerald-600 text-white shadow-lg shadow-emerald-600/10";
+                setDefaultDate('in-pem-tanggal');
+            } else if (tabName === 'pengeluaran') {
+                document.getElementById('tab-pengeluaran').classList.remove('hidden');
+                document.getElementById('btn-tab-pengeluaran').className = "px-5 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center space-x-2 bg-rose-600 text-white shadow-lg shadow-rose-600/10";
+                setDefaultDate('in-peng-tanggal');
+            } else if (tabName === 'multiple') {
+                if (tabMulti) tabMulti.classList.remove('hidden');
+                const btnMulti = document.getElementById('btn-tab-multiple');
+                if (btnMulti) btnMulti.className = "px-5 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center space-x-2 bg-blue-600 text-white shadow-lg shadow-blue-600/10";
+                const multiRows = document.getElementById('multiple-rows-container');
+                if (multiRows && multiRows.children.length === 0) {
+                    addMultipleRow();
+                }
+            }
+        }
+
+        // Mengatur default tanggal & jam input hari ini (Waktu Lokal)
+        function setDefaultDate(elementId) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+
+            const localDatetime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            document.getElementById(elementId).value = localDatetime;
+        }
+
+        function setFilter(filterType) {
+            activeFilter = filterType;
+
+            const filters = ['semua', 'pemasukan', 'pengeluaran'];
+            filters.forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if (f === filterType) {
+                    btn.className = "px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-indigo-600 text-white";
+                } else {
+                    btn.className = "px-3 py-1.5 text-xs font-medium rounded-lg transition-all text-gray-400 hover:text-white";
+                }
+            });
+            renderData();
+        }
+
+        function setTimeFilter(value) {
+            timeFilter = value;
+            renderData();
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('search-input').value.toLowerCase();
+            renderData();
+        }
+
+        // Proses Membaca & Kalkulasi Data untuk Di-render ke Layar
+        function renderData() {
+            let dbRaw = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
+
+            // 1. Urutkan Terbaru di Atas (Descending)
+            dbRaw.sort((a, b) => {
+                if (b.id && a.id) return b.id - a.id;
+                return new Date(b.tanggal) - new Date(a.tanggal);
+            });
+
+            // 2. Filter Waktu (Semua Waktu vs Bulan Ini)
+            let db = dbRaw;
+            if (timeFilter === 'bulan_ini') {
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+
+                db = dbRaw.filter(item => {
+                    if (!item.tanggal) return false;
+                    const itemDate = new Date(item.tanggal);
+                    return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
+                });
+            }
+
+            // 3. Hitung total matematika keuangan berdasarkan filter waktu
+            let totalPemasukan = 0;
+            let totalPengeluaran = 0;
+
+            db.forEach(item => {
+                if (item.jenis === 'pemasukan') totalPemasukan += Number(item.jumlah);
+                if (item.jenis === 'pengeluaran') totalPengeluaran += Number(item.jumlah);
+            });
+
+            const sisaHasil = totalPemasukan - totalPengeluaran;
+
+            // Tampilkan ke komponen Ringkasan Atas
+            document.getElementById('summary-pemasukan').textContent = formatRupiah(totalPemasukan);
+            document.getElementById('summary-pengeluaran').textContent = formatRupiah(totalPengeluaran);
+
+            const hasilText = document.getElementById('summary-hasil');
+            const hasilIcon = document.getElementById('summary-hasil-icon');
+
+            hasilText.textContent = (sisaHasil >= 0 ? '+ ' : '') + formatRupiah(sisaHasil);
+
+            if (sisaHasil > 0) {
+                hasilText.className = "text-2xl font-bold text-teal-400";
+                hasilIcon.className = "p-3 bg-teal-500/10 rounded-xl text-teal-400";
+            } else if (sisaHasil < 0) {
+                hasilText.className = "text-2xl font-bold text-rose-500";
+                hasilIcon.className = "p-3 bg-rose-500/10 rounded-xl text-rose-500";
+            } else {
+                hasilText.className = "text-2xl font-bold text-white";
+                hasilIcon.className = "p-3 bg-gray-800 rounded-xl text-gray-400";
+            }
+
+            // 2. Filter data & Sesuaikan Header Kolom Tabel berdasarkan permintaan Soal
+            const thead = document.getElementById('table-head');
+            const tbody = document.getElementById('table-body');
+
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            let filteredData = [];
+
+            if (activeFilter === 'semua') {
+                // Header: Nomor, Tanggal, Keterangan, Pemasukan/Pengeluaran
+                thead.innerHTML = `
+                    <tr>
+                        <th class="px-6 py-4 text-center w-16">No</th>
+                        <th class="px-6 py-4">Tanggal</th>
+                        <th class="px-6 py-4">Keterangan</th>
+                        <th class="px-6 py-4 text-right">Pemasukan / Pengeluaran</th>
+                        ${currentRole === 'admin' ? '<th class="px-6 py-4 text-center w-20">Aksi</th>' : ''}
+                    </tr>
+                `;
+                filteredData = db;
+            } else if (activeFilter === 'pemasukan') {
+                // Header: Nomor, Tanggal, Pemasukan, Keterangan
+                thead.innerHTML = `
+                    <tr>
+                        <th class="px-6 py-4 text-center w-16">No</th>
+                        <th class="px-6 py-4">Tanggal</th>
+                        <th class="px-6 py-4 text-right">Pemasukan</th>
+                        <th class="px-6 py-4">Keterangan</th>
+                        ${currentRole === 'admin' ? '<th class="px-6 py-4 text-center w-20">Aksi</th>' : ''}
+                    </tr>
+                `;
+                filteredData = db.filter(item => item.jenis === 'pemasukan');
+            } else if (activeFilter === 'pengeluaran') {
+                // Header: Nomor, Tanggal, Pengeluaran, Keterangan
+                thead.innerHTML = `
+                    <tr>
+                        <th class="px-6 py-4 text-center w-16">No</th>
+                        <th class="px-6 py-4">Tanggal</th>
+                        <th class="px-6 py-4 text-right">Pengeluaran</th>
+                        <th class="px-6 py-4">Keterangan</th>
+                        ${currentRole === 'admin' ? '<th class="px-6 py-4 text-center w-20">Aksi</th>' : ''}
+                    </tr>
+                `;
+                filteredData = db.filter(item => item.jenis === 'pengeluaran');
+            }
+
+            // 4. Live Search
+            if (searchQuery.trim() !== '') {
+                filteredData = filteredData.filter(item =>
+                    (item.keterangan || '').toLowerCase().includes(searchQuery)
+                );
+            }
+
+            // Jika tidak ada rincian data sama sekali
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="${currentRole === 'admin' ? '5' : '4'}" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>
+                            Tidak ada arsip data pencatatan saat ini.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Urutkan data berdasarkan tanggal terbaru
+            filteredData.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+            // Bangun struktur isi baris tabel demi baris
+            filteredData.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-800/30 transition-colors group border-b border-gray-800/40 last:border-0";
+
+                const formattedDate = formatDateIndo(item.tanggal);
+                const itemId = item.id || index; // Kompatibilitas data lama
+
+                const actionBtn = currentRole === 'admin' ? `
+                    <td class="px-6 py-4 text-center" data-label="Aksi">
+                        <div class="flex items-center justify-center space-x-2">
+                            <button onclick="openEditModal(${itemId})" class="text-gray-500 hover:text-indigo-400 transition-colors p-2 rounded-lg hover:bg-indigo-500/10" title="Edit Data">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="handleDelete(${itemId})" class="text-gray-500 hover:text-rose-400 transition-colors p-2 rounded-lg hover:bg-rose-500/10" title="Hapus Data">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                ` : '';
+
+                if (activeFilter === 'semua') {
+                    const isPem = item.jenis === 'pemasukan';
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 text-center font-medium text-gray-500 group-hover:text-gray-400" data-label="No">${index + 1}</td>
+                        <td class="px-6 py-4 whitespace-nowrap font-medium" data-label="Tanggal">${formattedDate}</td>
+                        <td class="px-6 py-4 text-gray-400 group-hover:text-gray-300 min-w-[200px] max-w-sm whitespace-normal break-words leading-relaxed" data-label="Keterangan">${item.keterangan}</td>
+                        <td class="px-6 py-4 text-right whitespace-nowrap font-semibold ${isPem ? 'text-emerald-400' : 'text-rose-400'}" data-label="Nominal">
+                            ${isPem ? '+' : '-'} ${formatRupiah(item.jumlah)}
+                        </td>
+                        ${actionBtn}
+                    `;
+                } else if (activeFilter === 'pemasukan') {
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 text-center font-medium text-gray-500 group-hover:text-gray-400" data-label="No">${index + 1}</td>
+                        <td class="px-6 py-4 whitespace-nowrap font-medium" data-label="Tanggal">${formattedDate}</td>
+                        <td class="px-6 py-4 text-right whitespace-nowrap font-semibold text-emerald-400" data-label="Pemasukan">+ ${formatRupiah(item.jumlah)}</td>
+                        <td class="px-6 py-4 text-gray-400 group-hover:text-gray-300 min-w-[200px] max-w-sm whitespace-normal break-words leading-relaxed" data-label="Keterangan">${item.keterangan}</td>
+                        ${actionBtn}
+                    `;
+                } else if (activeFilter === 'pengeluaran') {
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 text-center font-medium text-gray-500 group-hover:text-gray-400" data-label="No">${index + 1}</td>
+                        <td class="px-6 py-4 whitespace-nowrap font-medium" data-label="Tanggal">${formattedDate}</td>
+                        <td class="px-6 py-4 text-right whitespace-nowrap font-semibold text-rose-400" data-label="Pengeluaran">- ${formatRupiah(item.jumlah)}</td>
+                        <td class="px-6 py-4 text-gray-400 group-hover:text-gray-300 min-w-[200px] max-w-sm whitespace-normal break-words leading-relaxed" data-label="Keterangan">${item.keterangan}</td>
+                        ${actionBtn}
+                    `;
+                }
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Fungsi untuk format otomatis nilai Rp di form input
+        function formatInputRupiah(element) {
+            let val = element.value.replace(/[^,\d]/g, '');
+            if (val === '') {
+                element.value = '';
+                return;
+            }
+            let num = parseInt(val, 10);
+            element.value = num.toLocaleString('id-ID');
+        }
+
+        function getUnformattedValue(val) {
+            return parseInt(val.replace(/\./g, ''), 10) || 0;
+        }
+
+        // Penanganan Input Data Baru dari Form Admin & Sync Cloud
+        function handleInsert(event, type) {
+            event.preventDefault();
+
+            const btn = event.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersimpan Lokal!';
+
+            const tanggal = document.getElementById(`in-${type === 'pemasukan' ? 'pem' : 'peng'}-tanggal`).value;
+            const jumlahRaw = document.getElementById(`in-${type === 'pemasukan' ? 'pem' : 'peng'}-jumlah`).value;
+            const keterangan = document.getElementById(`in-${type === 'pemasukan' ? 'pem' : 'peng'}-keterangan`).value;
+
+            const jumlah = getUnformattedValue(jumlahRaw);
+
+            const payload = {
+                id: Date.now(),
+                tanggal: tanggal,
+                jenis: type,
+                jumlah: jumlah,
+                keterangan: keterangan
+            };
+
+            // Update Local Immediately (Optimistic Update)
+            const db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
+            db.push(payload);
+            localStorage.setItem('finance_ledger_db', JSON.stringify(db));
+
+            event.target.reset();
+            showToast(`Data tersimpan! Menyinkronkan ke Cloud di latar belakang...`, 'success');
+            switchTab('laporan');
+
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+            }, 1000);
+
+            // Post to Google Sheets Asynchronously (Fire and Forget)
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            }).then(response => response.json())
+                .then(result => {
+                    if (result.status !== 'success') {
+                        showToast('Peringatan: Gagal menyinkronkan data baru ke Cloud', 'error');
+                    }
+                }).catch(error => {
+                    // Error silencer - UI is already updated
+                });
+        }
+
+        // --- NEW FEATURES ---
+
+        // Fitur Hapus Data di Cloud
+        function handleDelete(id) {
+            if (!confirm('Apakah Anda yakin ingin menghapus data transaksi ini?')) return;
+
+            // Optimistic update locally
+            let db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
+            db = db.filter((item, index) => (item.id || index) != id);
+            localStorage.setItem('finance_ledger_db', JSON.stringify(db));
+
+            showToast('Data dihapus! Menyinkronkan ke Cloud...', 'success');
+            renderData();
+
+            const payload = {
+                action: 'delete',
+                id: id
+            };
+
+            // Process async without blocking UI
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            }).then(response => response.json())
+                .then(result => {
+                    if (result.status !== 'success') {
+                        showToast('Gagal menghapus dari Google Sheets', 'error');
+                    }
+                }).catch(error => {
+                    // Error silencer
+                });
+        }
+
+        // Fitur Edit Data (Optimistic)
+        function openEditModal(id) {
+            const db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
+            const item = db.find((d, index) => (d.id || index) == id);
+            if (!item) return;
+
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-jenis').value = item.jenis;
+            document.getElementById('edit-tanggal').value = item.tanggal;
+
+            const jumlahInput = document.getElementById('edit-jumlah');
+            jumlahInput.value = item.jumlah;
+            formatInputRupiah(jumlahInput);
+
+            if (item.jenis === 'pemasukan') {
+                jumlahInput.className = "w-full px-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-emerald-400 font-semibold focus:outline-none focus:border-indigo-500 text-sm";
+            } else {
+                jumlahInput.className = "w-full px-4 py-2.5 bg-gray-950 border border-gray-800 rounded-xl text-rose-400 font-semibold focus:outline-none focus:border-indigo-500 text-sm";
+            }
+
+            document.getElementById('edit-keterangan').value = item.keterangan;
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
+
+        function submitEdit(event) {
+            event.preventDefault();
+
+            const btn = document.getElementById('btn-submit-edit');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+            btn.disabled = true;
+
+            const id = document.getElementById('edit-id').value;
+            const jenis = document.getElementById('edit-jenis').value;
+            const tanggal = document.getElementById('edit-tanggal').value;
+            const jumlahRaw = document.getElementById('edit-jumlah').value;
+            const keterangan = document.getElementById('edit-keterangan').value;
+            const jumlah = getUnformattedValue(jumlahRaw);
+
+            // Optimistic update locally
+            let db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
+            let itemIndex = db.findIndex((d, index) => (d.id || index) == id);
+
+            if (itemIndex !== -1) {
+                db[itemIndex] = {
+                    ...db[itemIndex],
+                    tanggal: tanggal,
+                    jumlah: jumlah,
+                    keterangan: keterangan
+                };
+                localStorage.setItem('finance_ledger_db', JSON.stringify(db));
+                renderData();
+                closeEditModal();
+                showToast('Perubahan disimpan lokal. Menyinkronkan ke Cloud...', 'success');
+            }
+
+            // Sync to cloud
+            const payload = {
+                action: 'edit',
+                id: id,
+                tanggal: tanggal,
+                jenis: jenis,
+                jumlah: jumlah,
+                keterangan: keterangan
+            };
+
+            // Process async without blocking UI
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            }).then(response => response.json())
+                .then(result => {
+                    if (result.status !== 'success') {
+                        showToast('Gagal menyinkronkan perubahan ke Cloud', 'error');
+                    }
+                }).catch(err => {
+                    // Error silencer
+                });
+
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+
+        // Fitur View Excel (Modal on-screen)
+        function openExcelView() {
+            let db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
+
+            // Urutkan dari yang terlama ke terbaru (Ascending)
+            db.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+
+            const tbody = document.getElementById('excel-table-body');
+            tbody.innerHTML = '';
+
+            db.forEach((item, index) => {
+                let dateObj = new Date(item.tanggal);
+
+                let tanggalStr = `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
+                let jamStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':');
+
+                let pemStr = item.jenis === 'pemasukan' ? Number(item.jumlah).toLocaleString('id-ID') : '-';
+                let pengStr = item.jenis === 'pengeluaran' ? Number(item.jumlah).toLocaleString('id-ID') : '-';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="border border-gray-300 px-4 py-2 text-center text-gray-500">${index + 1}</td>
+                    <td class="border border-gray-300 px-4 py-2">${tanggalStr}</td>
+                    <td class="border border-gray-300 px-4 py-2">${jamStr}</td>
+                    <td class="border border-gray-300 px-4 py-2 whitespace-normal">${item.keterangan || ''}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-right font-medium ${item.jenis === 'pemasukan' ? 'text-green-700' : 'text-gray-400'}">${pemStr}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-right font-medium ${item.jenis === 'pengeluaran' ? 'text-red-700' : 'text-gray-400'}">${pengStr}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('excel-modal').classList.remove('hidden');
+        }
+
+        function closeExcelView() {
+            document.getElementById('excel-modal').classList.add('hidden');
+        }
+
+        function downloadExcelFile(event) {
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            try {
+                let db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
+                db.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+
+                let xml = '<?xml version="1.0"?>\n';
+                xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n';
+                xml += ' xmlns:o="urn:schemas-microsoft-com:office:office"\n';
+                xml += ' xmlns:x="urn:schemas-microsoft-com:office:excel"\n';
+                xml += ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"\n';
+                xml += ' xmlns:html="http://www.w3.org/TR/REC-html40">\n';
+
+                // Add Styles
+                xml += ' <Styles>\n';
+                xml += '  <Style ss:ID="sCenter">\n';
+                xml += '   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>\n';
+                xml += '   <Borders>\n';
+                xml += '    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '   </Borders>\n';
+                xml += '  </Style>\n';
+
+                xml += '  <Style ss:ID="sLeft">\n';
+                xml += '   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>\n';
+                xml += '   <Borders>\n';
+                xml += '    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '   </Borders>\n';
+                xml += '  </Style>\n';
+
+                xml += '  <Style ss:ID="sHeader">\n';
+                xml += '   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>\n';
+                xml += '   <Borders>\n';
+                xml += '    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '   </Borders>\n';
+                xml += '   <Font ss:Bold="1"/>\n';
+                xml += '   <Interior ss:Color="#e5e7eb" ss:Pattern="Solid"/>\n';
+                xml += '  </Style>\n';
+
+                xml += '  <Style ss:ID="sPemasukan">\n';
+                xml += '   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>\n';
+                xml += '   <Borders>\n';
+                xml += '    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '   </Borders>\n';
+                xml += '   <Font ss:Color="#065f46" ss:Bold="1"/>\n';
+                xml += '   <Interior ss:Color="#d1fae5" ss:Pattern="Solid"/>\n';
+                xml += '   <NumberFormat ss:Format="#,##0"/>\n';
+                xml += '  </Style>\n';
+
+                xml += '  <Style ss:ID="sPengeluaran">\n';
+                xml += '   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>\n';
+                xml += '   <Borders>\n';
+                xml += '    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#000000"/>\n';
+                xml += '   </Borders>\n';
+                xml += '   <Font ss:Color="#9f1239" ss:Bold="1"/>\n';
+                xml += '   <Interior ss:Color="#ffe4e6" ss:Pattern="Solid"/>\n';
+                xml += '   <NumberFormat ss:Format="#,##0"/>\n';
+                xml += '  </Style>\n';
+                xml += ' </Styles>\n';
+
+                xml += ' <Worksheet ss:Name="Laporan Keuangan">\n';
+                xml += '  <Table>\n';
+
+                // Add Column Widths
+                xml += '   <Column ss:Width="40"/>\n';
+                xml += '   <Column ss:Width="80"/>\n';
+                xml += '   <Column ss:Width="60"/>\n';
+                xml += '   <Column ss:Width="250"/>\n';
+                xml += '   <Column ss:Width="110"/>\n';
+                xml += '   <Column ss:Width="110"/>\n';
+
+                xml += '   <Row ss:Height="30">\n';
+                xml += '    <Cell ss:StyleID="sHeader"><Data ss:Type="String">No</Data></Cell>\n';
+                xml += '    <Cell ss:StyleID="sHeader"><Data ss:Type="String">Tanggal</Data></Cell>\n';
+                xml += '    <Cell ss:StyleID="sHeader"><Data ss:Type="String">Jam</Data></Cell>\n';
+                xml += '    <Cell ss:StyleID="sHeader"><Data ss:Type="String">Keterangan</Data></Cell>\n';
+                xml += '    <Cell ss:StyleID="sHeader"><Data ss:Type="String">Pemasukan</Data></Cell>\n';
+                xml += '    <Cell ss:StyleID="sHeader"><Data ss:Type="String">Pengeluaran</Data></Cell>\n';
+                xml += '   </Row>\n';
+
+                db.forEach((item, index) => {
+                    let dateObj = new Date(item.tanggal);
+                    let tanggalStr = `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
+                    let jamStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':');
+
+                    let ket = (item.keterangan || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    let isPem = item.jenis === 'pemasukan';
+                    let isPeng = item.jenis === 'pengeluaran';
+
+                    let pemCell = isPem ? `<Cell ss:StyleID="sPemasukan"><Data ss:Type="Number">${item.jumlah}</Data></Cell>` : `<Cell ss:StyleID="sCenter"><Data ss:Type="String">-</Data></Cell>`;
+                    let pengCell = isPeng ? `<Cell ss:StyleID="sPengeluaran"><Data ss:Type="Number">${item.jumlah}</Data></Cell>` : `<Cell ss:StyleID="sCenter"><Data ss:Type="String">-</Data></Cell>`;
+
+                    xml += '   <Row ss:Height="25">\n';
+                    xml += `    <Cell ss:StyleID="sCenter"><Data ss:Type="Number">${index + 1}</Data></Cell>\n`;
+                    xml += `    <Cell ss:StyleID="sCenter"><Data ss:Type="String">${tanggalStr}</Data></Cell>\n`;
+                    xml += `    <Cell ss:StyleID="sCenter"><Data ss:Type="String">${jamStr}</Data></Cell>\n`;
+                    xml += `    <Cell ss:StyleID="sLeft"><Data ss:Type="String">${ket}</Data></Cell>\n`;
+                    xml += `    ${pemCell}\n`;
+                    xml += `    ${pengCell}\n`;
+                    xml += '   </Row>\n';
+                });
+
+                xml += '  </Table>\n';
+                xml += ' </Worksheet>\n';
+                xml += '</Workbook>\n';
+
+                const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Laporan_Keuangan_${new Date().toISOString().split('T')[0]}.xls`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showToast('Laporan Excel berhasil di-download!', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast('Gagal membuat file Excel', 'error');
+            }
+
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+
+        function printLaporan() {
+            let db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
+            db.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+
+            let html = `
+            <html>
+            <head>
+                <title>Laporan Keuangan</title>
+                <style>
+                    body { font-family: 'Arial', sans-serif; padding: 20px; color: #000; }
+                    h2 { text-align: center; margin-bottom: 20px; text-transform: uppercase; }
+                    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+                    th, td { border: 1px solid #000; padding: 10px; }
+                    th { background-color: #f3f4f6; text-align: center; font-weight: bold; }
+                    .center { text-align: center; }
+                    .left { text-align: left; }
+                    .right { text-align: right; }
+                    .pemasukan { color: #065f46; background-color: #d1fae5; font-weight: bold; }
+                    .pengeluaran { color: #9f1239; background-color: #ffe4e6; font-weight: bold; }
+                    @media print {
+                        @page { margin: 1cm; size: A4 portrait; }
+                        body { padding: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <h2>Laporan Keuangan</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 5%">No</th>
+                            <th style="width: 15%">Tanggal</th>
+                            <th style="width: 10%">Jam</th>
+                            <th style="width: 40%">Keterangan</th>
+                            <th style="width: 15%">Pemasukan</th>
+                            <th style="width: 15%">Pengeluaran</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            db.forEach((item, index) => {
+                let dateObj = new Date(item.tanggal);
+                let tanggalStr = `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
+                let jamStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':');
+                let ket = item.keterangan || '';
+
+                let pemStr = item.jenis === 'pemasukan' ? Number(item.jumlah).toLocaleString('id-ID') : '-';
+                let pengStr = item.jenis === 'pengeluaran' ? Number(item.jumlah).toLocaleString('id-ID') : '-';
+
+                let pemClass = item.jenis === 'pemasukan' ? 'pemasukan right' : 'center';
+                let pengClass = item.jenis === 'pengeluaran' ? 'pengeluaran right' : 'center';
+
+                html += `
+                        <tr>
+                            <td class="center">${index + 1}</td>
+                            <td class="center">${tanggalStr}</td>
+                            <td class="center">${jamStr}</td>
+                            <td class="left">${ket}</td>
+                            <td class="${pemClass}">${pemStr}</td>
+                            <td class="${pengClass}">${pengStr}</td>
+                        </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            </body>
+            </html>
+            `;
+
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.open();
+                printWindow.document.write(html);
+                printWindow.document.close();
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            } else {
+                showToast('Popup diblokir! Izinkan popup untuk memprint.', 'error');
+            }
+        }
+
+        // Fitur Export Data (Backup Local)
+        function exportData() {
+            const db = localStorage.getItem('finance_ledger_db') || '[]';
+            const blob = new Blob([db], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_keuangan_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+
+            URL.revokeObjectURL(url);
+            showToast('Berhasil mendownload backup data!', 'success');
+        }
+
+        // Sistem Notifikasi Toast
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const bgColor = type === 'success' ? 'bg-emerald-500/90 border-emerald-500' : 'bg-rose-500/90 border-rose-500';
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-circle-xmark';
+
+            toast.className = `flex items-center space-x-3 px-4 py-3 rounded-xl border text-white shadow-lg shadow-black/50 transform transition-all duration-300 translate-y-[-100%] opacity-0 ${bgColor}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-lg"></i>
+                <span class="text-sm font-medium">${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            // Animate In
+            setTimeout(() => {
+                toast.classList.remove('translate-y-[-100%]', 'opacity-0');
+            }, 10);
+
+            // Animate Out & Remove
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-100%]', 'opacity-0');
+                setTimeout(() => toast.remove(), 3000);
+            }, 3000);
+        }
+
+        // Helper Format Mata Uang Rupiah IDR
+        function formatRupiah(angka) {
+            const absValue = Math.abs(angka);
+            return 'Rp ' + absValue.toLocaleString('id-ID');
+        }
+
+        // Helper Format Tanggal & Jam Indonesia yang Cantik
+        function formatDateIndo(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            const optionsDate = { year: 'numeric', month: 'short', day: 'numeric' };
+            const formattedDate = date.toLocaleDateString('id-ID', optionsDate);
+
+            // Jika ada data waktu spesifik (mengandung huruf 'T' dan lebih panjang dari 'YYYY-MM-DD')
+            if (dateString.includes('T') && dateString.length > 10) {
+                const optionsTime = { hour: '2-digit', minute: '2-digit', hour12: false };
+                let formattedTime = date.toLocaleTimeString('id-ID', optionsTime).replace(/\./g, ':');
+                return `<div class="flex flex-col"><span>${formattedDate}</span><span class="text-xs text-gray-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${formattedTime}</span></div>`;
+            }
+            return formattedDate;
+        }
+    </script>
+</body>
+
+</html>

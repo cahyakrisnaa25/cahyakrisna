@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial by Jhon</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍿</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e50914;
+            --primary-hover: #f40612;
+            --bg: #0a0a0f;
+            --surface: #14141b;
+            --surface-hover: #1c1c26;
+            --surface-light: #252532;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            --border: #2a2a3a;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --shadow-glow: 0 0 40px rgba(229, 9, 20, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 50% 0%, rgba(229, 9, 20, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(100, 50, 255, 0.05) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            padding: 12px 0 16px;
+            margin-bottom: 4px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), #ff2d55);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 16px rgba(229, 9, 20, 0.3);
+        }
+
+        .brand h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #fff, #c0c0d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: -2px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .player-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow), var(--shadow-glow);
+            border: 1px solid var(--border);
+        }
+
+        video {
+            width: 100%;
+            display: block;
+            aspect-ratio: 16/9;
+            object-fit: contain;
+            max-height: 90vh;
+        }
+
+        .playlist-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 120px);
+            position: sticky;
+            top: 16px;
+        }
+
+        .playlist-header {
+            padding: 18px 22px;
+            background: rgba(255, 255, 255, 0.02);
+            font-weight: 600;
+            font-size: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .playlist-header .count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            background: var(--surface-light);
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .search-wrapper {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+        .search-box {
+            padding: 10px 14px 10px 38px;
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .search-box::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.1);
+        }
+
+        .playlist {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .playlist::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .playlist::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .playlist::-webkit-scrollbar-thumb {
+            background: var(--surface-light);
+            border-radius: 10px;
+        }
+
+        .playlist::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        .playlist-item {
+            padding: 12px 18px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: relative;
+        }
+
+        .playlist-item:last-child {
+            border-bottom: none;
+        }
+
+        .playlist-item:hover {
+            background: var(--surface-hover);
+        }
+
+        .playlist-item.active {
+            background: rgba(229, 9, 20, 0.1);
+        }
+
+        .playlist-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--primary);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .playlist-item .thumb {
+            width: 56px;
+            height: 40px;
+            background: var(--surface-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .playlist-item.active .thumb {
+            background: rgba(229, 9, 20, 0.2);
+        }
+
+        .playlist-item .playing-indicator {
+            display: none;
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            background: var(--primary);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #fff;
+        }
+
+        .playlist-item.active .playing-indicator {
+            display: block;
+        }
+
+        .playlist-item .info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .playlist-item .title {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text);
+        }
+
+        .playlist-item.active .title {
+            color: var(--primary);
+        }
+
+        .playlist-item .duration {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .playlist-item .play-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+            opacity: 0;
+            transition: all 0.2s;
+        }
+
+        .playlist-item:hover .play-icon {
+            opacity: 1;
+        }
+
+        .playlist-item.active .play-icon {
+            background: var(--primary);
+            color: #fff;
+            opacity: 1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            width: 72px;
+            height: 72px;
+            background: var(--surface-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .empty-state p {
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .empty-state code {
+            background: var(--surface-light);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .playlist-item {
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .playlist-section {
+                max-height: 50vh;
+                position: static;
+            }
+
+            video {
+                max-height: 70vh;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 12px;
+            }
+
+            header {
+                padding: 8px 0 12px;
+            }
+
+            .brand h1 {
+                font-size: 1.3rem;
+            }
+
+            .brand p {
+                font-size: 0.75rem;
+            }
+
+            .playlist-section {
+                max-height: 45vh;
+            }
+
+            .playlist-header {
+                padding: 14px 16px;
+                font-size: 0.95rem;
+            }
+
+            .search-wrapper {
+                padding: 12px 14px;
+            }
+
+            .playlist-item {
+                padding: 10px 14px;
+                gap: 10px;
+            }
+
+            .playlist-item .thumb {
+                width: 48px;
+                height: 36px;
+            }
+
+            .playlist-item .title {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="brand">
+                <div class="brand-icon">▶</div>
+                <div>
+                    <h1>Tutorial by Jhon</h1>
+                    <p>Putar video, tenang ga ada suaranya.. aman saat sharescreen..</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="player-section">
+                <div class="video-wrapper">
+                    <iframe id="videoPlayer"
+                        src=""
+                        style="width:100%; aspect-ratio:16/9; border:none; display:block;"
+                        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                        allowfullscreen
+                        frameborder="0">
+                    </iframe>
+                </div>
+            </div>
+
+            <div class="playlist-section">
+                <div class="playlist-header">
+                    <span>📋 Playlist</span>
+                    <span class="count" id="videoCount">0 video</span>
+                </div>
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-box" id="searchBox" placeholder="Cari video..." oninput="filterPlaylist()">
+                </div>
+                <div class="playlist" id="playlist">
+                    <div class="empty-state">
+                        <div class="icon">🎬</div>
+                        <h3>Belum ada video</h3>
+                        <p>Taruh file video di folder<br><code>assets/</code></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const videoFiles = [
+            // Format Cloudinary:
+            // { name: 'Nama Video', cloudName: '...', publicId: '...' }
+            { name: 'Tutorial Daftar Server', cloudName: 'ddiiqxdy9', publicId: 'tutorial-daftar-server_levm1x' },
+        ];
+
+        let playlist = [];
+        let currentIndex = -1;
+
+        const videoPlayer = document.getElementById('videoPlayer');
+        const playlistEl = document.getElementById('playlist');
+        const searchBox = document.getElementById('searchBox');
+        const videoCount = document.getElementById('videoCount');
+
+        function getCloudinaryUrl(cloudName, publicId) {
+            return `https://player.cloudinary.com/embed/?cloud_name=${encodeURIComponent(cloudName)}&public_id=${encodeURIComponent(publicId)}`;
+        }
+
+        function init() {
+            playlist = videoFiles.map((item, index) => {
+                const isObject = typeof item === 'object' && item !== null;
+                const name = isObject ? item.name : item.replace(/\.[^/.]+$/, '');
+                return {
+                    id: index,
+                    name: name,
+                    cloudName: isObject ? item.cloudName : null,
+                    publicId: isObject ? item.publicId : null
+                };
+            });
+            videoCount.textContent = `${playlist.length} video`;
+            renderPlaylist();
+
+            if (playlist.length > 0) {
+                selectVideo(0);
+            }
+        }
+
+        function selectVideo(id) {
+            const video = playlist.find(v => v.id === id);
+            if (!video) return;
+
+            currentIndex = id;
+            const src = getCloudinaryUrl(video.cloudName, video.publicId);
+            console.log('Loading video:', src);
+            videoPlayer.src = src;
+
+            renderPlaylist(searchBox.value);
+        }
+
+        function renderPlaylist(filter = '') {
+            const filtered = playlist.filter(v =>
+                v.name.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                playlistEl.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🎬</div>
+                        <h3>${filter ? 'Tidak ditemukan' : 'Belum ada video'}</h3>
+                        <p>${filter ? 'Coba kata kunci lain' : 'Edit array <code>videoFiles</code> di <code>index.html</code>.'}</p>
+                    </div>
+                `;
+                videoCount.textContent = `${filtered.length} video`;
+                return;
+            }
+
+            videoCount.textContent = `${filtered.length} video`;
+            playlistEl.innerHTML = filtered.map((video, idx) => `
+                <div class="playlist-item ${video.id === currentIndex ? 'active' : ''}" onclick="playVideo(${video.id})" style="animation-delay: ${idx * 0.03}s">
+                    <div class="thumb">
+                        <span>${video.id === currentIndex ? '▶' : '🎞'}</span>
+                        <span class="playing-indicator">NOW</span>
+                    </div>
+                    <div class="info">
+                        <span class="title">${video.name}</span>
+                        <span class="duration">${video.id === currentIndex ? 'Sedang diputar' : 'Cloudinary'}</span>
+                    </div>
+                    <div class="play-icon">▶</div>
+                </div>
+            `).join('');
+        }
+
+        function playVideo(id) {
+            selectVideo(id);
+        }
+
+        function filterPlaylist() {
+            renderPlaylist(searchBox.value);
+        }
+
+        init();
+    </script>
+</body>
+</html>
