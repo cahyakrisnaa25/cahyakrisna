@@ -593,9 +593,13 @@
             try {
                 const response = await fetch(SCRIPT_URL);
                 const data = await response.json();
-                localStorage.setItem('finance_ledger_db', JSON.stringify(data));
-                renderData();
-                showToast('Data berhasil disinkronkan!', 'success');
+                if (Array.isArray(data)) {
+                    localStorage.setItem('finance_ledger_db', JSON.stringify(data));
+                    renderData();
+                    showToast('Data berhasil disinkronkan!', 'success');
+                } else {
+                    showToast('Format data cloud tidak sesuai. Menggunakan data lokal.', 'error');
+                }
             } catch (error) {
                 showToast('Gagal memuat data dari cloud. Menggunakan data lokal.', 'error');
             }
@@ -766,7 +770,10 @@
             // Background sync securely sequenced to avoid Apps Script locking issues
             newItems.forEach((item, index) => {
                 setTimeout(() => {
-                    saveDataToDrive('insert', item);
+                    fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'insert', ...item })
+                    }).then(res => res.json()).catch(() => {});
                 }, index * 800);
             });
 
@@ -777,7 +784,6 @@
                 document.getElementById('multiple-rows-container').innerHTML = '';
                 switchTab('laporan');
                 renderData();
-                calculateSaldo();
             }, 500);
         }
 
@@ -867,10 +873,12 @@
         function renderData() {
             let dbRaw = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
 
-            // 1. Urutkan Terbaru di Atas (Descending)
+            // 1. Urutkan Terbaru di Atas (Descending) berdasarkan tanggal & ID secara aman
             dbRaw.sort((a, b) => {
-                if (b.id && a.id) return b.id - a.id;
-                return new Date(b.tanggal) - new Date(a.tanggal);
+                const timeA = parseLocalDate(a.tanggal).getTime();
+                const timeB = parseLocalDate(b.tanggal).getTime();
+                if (timeB !== timeA) return timeB - timeA;
+                return String(b.id || '').localeCompare(String(a.id || ''));
             });
 
             // 2. Filter Waktu (Semua Waktu vs Bulan Ini)
@@ -882,18 +890,18 @@
 
                 db = dbRaw.filter(item => {
                     if (!item.tanggal) return false;
-                    const itemDate = new Date(item.tanggal);
+                    const itemDate = parseLocalDate(item.tanggal);
                     return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
                 });
             }
 
-            // 3. Hitung total matematika keuangan berdasarkan filter waktu
+            // 3. Hitung total matematika keuangan berdasarkan filter waktu dengan parseAmount
             let totalPemasukan = 0;
             let totalPengeluaran = 0;
 
             db.forEach(item => {
-                if (item.jenis === 'pemasukan') totalPemasukan += Number(item.jumlah);
-                if (item.jenis === 'pengeluaran') totalPengeluaran += Number(item.jumlah);
+                if (item.jenis === 'pemasukan') totalPemasukan += parseAmount(item.jumlah);
+                if (item.jenis === 'pengeluaran') totalPengeluaran += parseAmount(item.jumlah);
             });
 
             const sisaHasil = totalPemasukan - totalPengeluaran;
@@ -905,15 +913,16 @@
             const hasilText = document.getElementById('summary-hasil');
             const hasilIcon = document.getElementById('summary-hasil-icon');
 
-            hasilText.textContent = (sisaHasil >= 0 ? '+ ' : '') + formatRupiah(sisaHasil);
-
             if (sisaHasil > 0) {
+                hasilText.textContent = '+ ' + formatRupiah(sisaHasil);
                 hasilText.className = "text-2xl font-bold text-teal-400";
                 hasilIcon.className = "p-3 bg-teal-500/10 rounded-xl text-teal-400";
             } else if (sisaHasil < 0) {
+                hasilText.textContent = '- ' + formatRupiah(Math.abs(sisaHasil));
                 hasilText.className = "text-2xl font-bold text-rose-500";
                 hasilIcon.className = "p-3 bg-rose-500/10 rounded-xl text-rose-500";
             } else {
+                hasilText.textContent = formatRupiah(0);
                 hasilText.className = "text-2xl font-bold text-white";
                 hasilIcon.className = "p-3 bg-gray-800 rounded-xl text-gray-400";
             }
@@ -985,8 +994,13 @@
                 return;
             }
 
-            // Urutkan data berdasarkan tanggal terbaru
-            filteredData.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+            // Urutkan data berdasarkan tanggal terbaru & ID secara aman
+            filteredData.sort((a, b) => {
+                const timeA = parseLocalDate(a.tanggal).getTime();
+                const timeB = parseLocalDate(b.tanggal).getTime();
+                if (timeB !== timeA) return timeB - timeA;
+                return String(b.id || '').localeCompare(String(a.id || ''));
+            });
 
             // Bangun struktur isi baris tabel demi baris
             filteredData.forEach((item, index) => {
@@ -994,29 +1008,32 @@
                 tr.className = "hover:bg-gray-800/30 transition-colors group border-b border-gray-800/40 last:border-0";
 
                 const formattedDate = formatDateIndo(item.tanggal);
-                const itemId = item.id || index; // Kompatibilitas data lama
+                const rawId = item.id !== undefined && item.id !== null ? item.id : index;
+                const itemId = String(rawId).replace(/'/g, "\\'");
 
                 const actionBtn = currentRole === 'admin' ? `
                     <td class="px-6 py-4 text-center" data-label="Aksi">
                         <div class="flex items-center justify-center space-x-2">
-                            <button onclick="openEditModal(${itemId})" class="text-gray-500 hover:text-indigo-400 transition-colors p-2 rounded-lg hover:bg-indigo-500/10" title="Edit Data">
+                            <button onclick="openEditModal('${itemId}')" class="text-gray-500 hover:text-indigo-400 transition-colors p-2 rounded-lg hover:bg-indigo-500/10" title="Edit Data">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <button onclick="handleDelete(${itemId})" class="text-gray-500 hover:text-rose-400 transition-colors p-2 rounded-lg hover:bg-rose-500/10" title="Hapus Data">
+                            <button onclick="handleDelete('${itemId}')" class="text-gray-500 hover:text-rose-400 transition-colors p-2 rounded-lg hover:bg-rose-500/10" title="Hapus Data">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </div>
                     </td>
                 ` : '';
 
+                const amount = parseAmount(item.jumlah);
+
                 if (activeFilter === 'semua') {
                     const isPem = item.jenis === 'pemasukan';
                     tr.innerHTML = `
                         <td class="px-6 py-4 text-center font-medium text-gray-500 group-hover:text-gray-400" data-label="No">${index + 1}</td>
                         <td class="px-6 py-4 whitespace-nowrap font-medium" data-label="Tanggal">${formattedDate}</td>
-                        <td class="px-6 py-4 text-gray-400 group-hover:text-gray-300 min-w-[200px] max-w-sm whitespace-normal break-words leading-relaxed" data-label="Keterangan">${item.keterangan}</td>
+                        <td class="px-6 py-4 text-gray-400 group-hover:text-gray-300 min-w-[200px] max-w-sm whitespace-normal break-words leading-relaxed" data-label="Keterangan">${item.keterangan || ''}</td>
                         <td class="px-6 py-4 text-right whitespace-nowrap font-semibold ${isPem ? 'text-emerald-400' : 'text-rose-400'}" data-label="Nominal">
-                            ${isPem ? '+' : '-'} ${formatRupiah(item.jumlah)}
+                            ${isPem ? '+' : '-'} ${formatRupiah(amount)}
                         </td>
                         ${actionBtn}
                     `;
@@ -1024,16 +1041,16 @@
                     tr.innerHTML = `
                         <td class="px-6 py-4 text-center font-medium text-gray-500 group-hover:text-gray-400" data-label="No">${index + 1}</td>
                         <td class="px-6 py-4 whitespace-nowrap font-medium" data-label="Tanggal">${formattedDate}</td>
-                        <td class="px-6 py-4 text-right whitespace-nowrap font-semibold text-emerald-400" data-label="Pemasukan">+ ${formatRupiah(item.jumlah)}</td>
-                        <td class="px-6 py-4 text-gray-400 group-hover:text-gray-300 min-w-[200px] max-w-sm whitespace-normal break-words leading-relaxed" data-label="Keterangan">${item.keterangan}</td>
+                        <td class="px-6 py-4 text-right whitespace-nowrap font-semibold text-emerald-400" data-label="Pemasukan">+ ${formatRupiah(amount)}</td>
+                        <td class="px-6 py-4 text-gray-400 group-hover:text-gray-300 min-w-[200px] max-w-sm whitespace-normal break-words leading-relaxed" data-label="Keterangan">${item.keterangan || ''}</td>
                         ${actionBtn}
                     `;
                 } else if (activeFilter === 'pengeluaran') {
                     tr.innerHTML = `
                         <td class="px-6 py-4 text-center font-medium text-gray-500 group-hover:text-gray-400" data-label="No">${index + 1}</td>
                         <td class="px-6 py-4 whitespace-nowrap font-medium" data-label="Tanggal">${formattedDate}</td>
-                        <td class="px-6 py-4 text-right whitespace-nowrap font-semibold text-rose-400" data-label="Pengeluaran">- ${formatRupiah(item.jumlah)}</td>
-                        <td class="px-6 py-4 text-gray-400 group-hover:text-gray-300 min-w-[200px] max-w-sm whitespace-normal break-words leading-relaxed" data-label="Keterangan">${item.keterangan}</td>
+                        <td class="px-6 py-4 text-right whitespace-nowrap font-semibold text-rose-400" data-label="Pengeluaran">- ${formatRupiah(amount)}</td>
+                        <td class="px-6 py-4 text-gray-400 group-hover:text-gray-300 min-w-[200px] max-w-sm whitespace-normal break-words leading-relaxed" data-label="Keterangan">${item.keterangan || ''}</td>
                         ${actionBtn}
                     `;
                 }
@@ -1113,7 +1130,7 @@
 
             // Optimistic update locally
             let db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
-            db = db.filter((item, index) => (item.id || index) != id);
+            db = db.filter((item, index) => String(item.id !== undefined && item.id !== null ? item.id : index) !== String(id));
             localStorage.setItem('finance_ledger_db', JSON.stringify(db));
 
             showToast('Data dihapus! Menyinkronkan ke Cloud...', 'success');
@@ -1141,7 +1158,7 @@
         // Fitur Edit Data (Optimistic)
         function openEditModal(id) {
             const db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
-            const item = db.find((d, index) => (d.id || index) == id);
+            const item = db.find((d, index) => String(d.id !== undefined && d.id !== null ? d.id : index) === String(id));
             if (!item) return;
 
             document.getElementById('edit-id').value = id;
@@ -1183,7 +1200,7 @@
 
             // Optimistic update locally
             let db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
-            let itemIndex = db.findIndex((d, index) => (d.id || index) == id);
+            let itemIndex = db.findIndex((d, index) => String(d.id !== undefined && d.id !== null ? d.id : index) === String(id));
 
             if (itemIndex !== -1) {
                 db[itemIndex] = {
@@ -1230,19 +1247,22 @@
             let db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
 
             // Urutkan dari yang terlama ke terbaru (Ascending)
-            db.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+            db.sort((a, b) => parseLocalDate(a.tanggal) - parseLocalDate(b.tanggal));
 
             const tbody = document.getElementById('excel-table-body');
             tbody.innerHTML = '';
 
             db.forEach((item, index) => {
-                let dateObj = new Date(item.tanggal);
+                let dateObj = parseLocalDate(item.tanggal);
 
                 let tanggalStr = `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
-                let jamStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':');
+                let jamStr = (item.tanggal && String(item.tanggal).includes('T'))
+                    ? dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':')
+                    : '-';
 
-                let pemStr = item.jenis === 'pemasukan' ? Number(item.jumlah).toLocaleString('id-ID') : '-';
-                let pengStr = item.jenis === 'pengeluaran' ? Number(item.jumlah).toLocaleString('id-ID') : '-';
+                let amount = parseAmount(item.jumlah);
+                let pemStr = item.jenis === 'pemasukan' ? amount.toLocaleString('id-ID') : '-';
+                let pengStr = item.jenis === 'pengeluaran' ? amount.toLocaleString('id-ID') : '-';
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 transition-colors";
@@ -1272,7 +1292,7 @@
 
             try {
                 let db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
-                db.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+                db.sort((a, b) => parseLocalDate(a.tanggal) - parseLocalDate(b.tanggal));
 
                 let xml = '<?xml version="1.0"?>\n';
                 xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n';
@@ -1363,16 +1383,19 @@
                 xml += '   </Row>\n';
 
                 db.forEach((item, index) => {
-                    let dateObj = new Date(item.tanggal);
+                    let dateObj = parseLocalDate(item.tanggal);
                     let tanggalStr = `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
-                    let jamStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':');
+                    let jamStr = (item.tanggal && String(item.tanggal).includes('T'))
+                        ? dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':')
+                        : '-';
 
                     let ket = (item.keterangan || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    let amount = parseAmount(item.jumlah);
                     let isPem = item.jenis === 'pemasukan';
                     let isPeng = item.jenis === 'pengeluaran';
 
-                    let pemCell = isPem ? `<Cell ss:StyleID="sPemasukan"><Data ss:Type="Number">${item.jumlah}</Data></Cell>` : `<Cell ss:StyleID="sCenter"><Data ss:Type="String">-</Data></Cell>`;
-                    let pengCell = isPeng ? `<Cell ss:StyleID="sPengeluaran"><Data ss:Type="Number">${item.jumlah}</Data></Cell>` : `<Cell ss:StyleID="sCenter"><Data ss:Type="String">-</Data></Cell>`;
+                    let pemCell = isPem ? `<Cell ss:StyleID="sPemasukan"><Data ss:Type="Number">${amount}</Data></Cell>` : `<Cell ss:StyleID="sCenter"><Data ss:Type="String">-</Data></Cell>`;
+                    let pengCell = isPeng ? `<Cell ss:StyleID="sPengeluaran"><Data ss:Type="Number">${amount}</Data></Cell>` : `<Cell ss:StyleID="sCenter"><Data ss:Type="String">-</Data></Cell>`;
 
                     xml += '   <Row ss:Height="25">\n';
                     xml += `    <Cell ss:StyleID="sCenter"><Data ss:Type="Number">${index + 1}</Data></Cell>\n`;
@@ -1411,7 +1434,7 @@
 
         function printLaporan() {
             let db = JSON.parse(localStorage.getItem('finance_ledger_db')) || [];
-            db.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+            db.sort((a, b) => parseLocalDate(a.tanggal) - parseLocalDate(b.tanggal));
 
             let html = `
             <html>
@@ -1451,13 +1474,16 @@
             `;
 
             db.forEach((item, index) => {
-                let dateObj = new Date(item.tanggal);
+                let dateObj = parseLocalDate(item.tanggal);
                 let tanggalStr = `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
-                let jamStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':');
+                let jamStr = (item.tanggal && String(item.tanggal).includes('T'))
+                    ? dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':')
+                    : '-';
                 let ket = item.keterangan || '';
+                let amount = parseAmount(item.jumlah);
 
-                let pemStr = item.jenis === 'pemasukan' ? Number(item.jumlah).toLocaleString('id-ID') : '-';
-                let pengStr = item.jenis === 'pengeluaran' ? Number(item.jumlah).toLocaleString('id-ID') : '-';
+                let pemStr = item.jenis === 'pemasukan' ? amount.toLocaleString('id-ID') : '-';
+                let pengStr = item.jenis === 'pengeluaran' ? amount.toLocaleString('id-ID') : '-';
 
                 let pemClass = item.jenis === 'pemasukan' ? 'pemasukan right' : 'center';
                 let pengClass = item.jenis === 'pengeluaran' ? 'pengeluaran right' : 'center';
@@ -1538,21 +1564,52 @@
             }, 3000);
         }
 
+        // Helper Sanitasi Angka Nominal Aman (Mencegah NaN)
+        function parseAmount(val) {
+            if (val === undefined || val === null || val === '') return 0;
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
+            let clean = String(val).replace(/[^0-9-]/g, '');
+            return parseInt(clean, 10) || 0;
+        }
+
+        // Helper Format Tanggal Lokal (Mencegah pergeseran timezone UTC)
+        function parseLocalDate(dateString) {
+            if (!dateString) return new Date();
+            if (typeof dateString === 'string' && !dateString.includes('Z') && !dateString.includes('+')) {
+                const parts = dateString.split('T');
+                const dateParts = parts[0].split('-').map(Number);
+                if (dateParts.length === 3) {
+                    const year = dateParts[0];
+                    const month = dateParts[1] - 1;
+                    const day = dateParts[2];
+                    let hour = 0, minute = 0, second = 0;
+                    if (parts[1]) {
+                        const timeParts = parts[1].split(':').map(Number);
+                        hour = timeParts[0] || 0;
+                        minute = timeParts[1] || 0;
+                        second = timeParts[2] || 0;
+                    }
+                    return new Date(year, month, day, hour, minute, second);
+                }
+            }
+            return new Date(dateString);
+        }
+
         // Helper Format Mata Uang Rupiah IDR
         function formatRupiah(angka) {
-            const absValue = Math.abs(angka);
+            const absValue = Math.abs(parseAmount(angka));
             return 'Rp ' + absValue.toLocaleString('id-ID');
         }
 
         // Helper Format Tanggal & Jam Indonesia yang Cantik
         function formatDateIndo(dateString) {
             if (!dateString) return '-';
-            const date = new Date(dateString);
+            const date = parseLocalDate(dateString);
             const optionsDate = { year: 'numeric', month: 'short', day: 'numeric' };
             const formattedDate = date.toLocaleDateString('id-ID', optionsDate);
 
             // Jika ada data waktu spesifik (mengandung huruf 'T' dan lebih panjang dari 'YYYY-MM-DD')
-            if (dateString.includes('T') && dateString.length > 10) {
+            if (typeof dateString === 'string' && dateString.includes('T') && dateString.length > 10) {
                 const optionsTime = { hour: '2-digit', minute: '2-digit', hour12: false };
                 let formattedTime = date.toLocaleTimeString('id-ID', optionsTime).replace(/\./g, ':');
                 return `<div class="flex flex-col"><span>${formattedDate}</span><span class="text-xs text-gray-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${formattedTime}</span></div>`;
